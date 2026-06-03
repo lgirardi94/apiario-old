@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<!-- FILE VERSION: 2026-05-28.3 · todo.html -->
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Apiario — Da fare</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
+<link rel="manifest" href="todo.manifest.json">
+<meta name="theme-color" content="#C8860A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Da fare">
+<link rel="apple-touch-icon" href="icons/todo_192.png">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="shared.js?v=20260567"></script>
+<script src="js/storage.js?v=20260567"></script>
+<style>
+  :root {
+    --amber: #C8860A; --amber-light: #E8A020; --amber-pale: #FDF3DC; --amber-glow: #F5C842;
+    --dark: #1A1208; --dark-mid: #2E1F08; --brown: #5C3A10; --brown-light: #8B5E2A;
+    --cream: #FBF5E6; --cream-dark: #F0E6CC; --text: #2A1A05; --text-light: #6B4A20;
+    --green: #4A7C3F; --red: #8A2C2C; --blue: #2C5F8A; --shadow: rgba(26,18,8,0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Crimson Pro', Georgia, serif; background: var(--cream); color: var(--text);
+    min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
+
+  /* Header */
+  header { background: linear-gradient(135deg, var(--dark-mid), var(--dark)); color: var(--amber-glow);
+    padding: calc(1.2rem + env(safe-area-inset-top)) 1.2rem 1rem; position: sticky; top: 0; z-index: 20; }
+  header .top { display: flex; align-items: center; gap: 0.5rem; }
+  header h1 { font-family: 'Playfair Display', Georgia, serif; font-size: 1.4rem; font-weight: 700; }
+  header .sub { font-size: 0.78rem; color: rgba(245,200,66,0.6); margin-top: 0.15rem; }
+  .drive-dot { width: 9px; height: 9px; border-radius: 50%; background: #8A6D3B; margin-left: auto; transition: background 0.3s; }
+  .drive-dot.connected { background: #5D8C44; box-shadow: 0 0 8px rgba(93,140,68,0.6); }
+
+  /* Login / loading */
+  #driveLoginScreen { display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 70vh; text-align: center; padding: 2rem 1.5rem; }
+  #driveLoginScreen .bee { font-size: 3.5rem; margin-bottom: 1rem; }
+  #driveLoginScreen h2 { font-family: 'Playfair Display', serif; color: var(--brown); margin-bottom: 0.6rem; }
+  #driveLoginScreen p { color: var(--text-light); max-width: 300px; margin-bottom: 1.5rem; line-height: 1.5; }
+  .btn-google { display: inline-flex; align-items: center; gap: 0.6rem; background: white; border: 1.5px solid var(--cream-dark);
+    border-radius: 10px; padding: 0.8rem 1.4rem; font-family: inherit; font-size: 1rem; font-weight: 600; color: var(--text); cursor: pointer; }
+  .spinner { width: 40px; height: 40px; border: 4px solid var(--cream-dark); border-top-color: var(--amber);
+    border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 1.2rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Colpo d'occhio */
+  .glance { display: flex; gap: 0.6rem; padding: 1rem 1.2rem 0.3rem; }
+  .glance-card { flex: 1; border-radius: 12px; padding: 0.8rem 0.4rem; text-align: center; border: 1.5px solid; cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.15s; }
+  .glance-card:active { transform: scale(0.96); }
+  .glance-card.sel { box-shadow: 0 0 0 3px rgba(200,134,10,0.35); }
+  .glance-card .num { font-size: 1.9rem; font-weight: 800; font-family: 'Playfair Display', serif; line-height: 1; }
+  .glance-card .lbl { font-size: 0.7rem; margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 700; }
+  .g-scaduti { background: #FBE9E7; border-color: #E0A8A0; color: var(--red); }
+  .g-scadenza { background: #FFF3DC; border-color: var(--amber); color: #9A6B00; }
+  .g-futuri { background: #EAF0F7; border-color: #A8C0DA; color: var(--blue); }
+
+  /* Vista toggle */
+  .vista-toggle { display: flex; gap: 0.4rem; padding: 0.6rem 1.2rem 0.2rem; }
+  .vista-btn { flex: 1; padding: 0.55rem; border-radius: 8px; border: 1.5px solid var(--cream-dark); background: white;
+    font-family: inherit; font-size: 0.85rem; color: var(--text-light); cursor: pointer; font-weight: 600; }
+  .vista-btn.on { background: var(--amber-pale); border-color: var(--amber); color: var(--brown); }
+
+  /* Filtro attivo banner */
+  .filtro-attivo { margin: 0.5rem 1.2rem 0; background: var(--amber-pale); border: 1px solid var(--amber);
+    border-radius: 8px; padding: 0.5rem 0.8rem; font-size: 0.85rem; color: var(--brown); display: none; align-items: center; gap: 0.5rem; }
+  .filtro-attivo button { margin-left: auto; background: var(--brown); color: white; border: none; border-radius: 6px;
+    padding: 0.25rem 0.6rem; font-size: 0.78rem; cursor: pointer; font-family: inherit; }
+
+  /* Lista */
+  .lista { padding: 0.6rem 1.2rem 6.5rem; }
+  .cat-block { margin-bottom: 1.2rem; }
+  .cat-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; padding-bottom: 0.3rem; border-bottom: 2px solid var(--cream-dark); }
+  .cat-head .cat-name { font-weight: 700; font-size: 0.95rem; }
+  .cat-head .cat-cnt { margin-left: auto; font-size: 0.76rem; color: var(--text-light); background: var(--cream); border-radius: 10px; padding: 0.1rem 0.5rem; }
+
+  .todo { background: white; border: 1px solid var(--cream-dark); border-left: 4px solid var(--cream-dark);
+    border-radius: 10px; padding: 0.8rem 0.9rem; margin-bottom: 0.5rem; display: flex; gap: 0.7rem; align-items: flex-start; }
+  .todo.urg { border-left-color: var(--red); }
+  .todo.alta { border-left-color: var(--amber-light); }
+  .todo.fatto { opacity: 0.5; }
+  .check { width: 26px; height: 26px; border: 2px solid var(--amber); border-radius: 7px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; background: white; color: white; font-size: 1rem; cursor: pointer; }
+  .check.done { background: var(--green); border-color: var(--green); }
+  .todo-body { flex: 1; min-width: 0; }
+  .todo-testo { font-size: 1.02rem; font-weight: 600; color: var(--text); }
+  .todo.fatto .todo-testo { text-decoration: line-through; }
+  .todo-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.35rem; align-items: center; }
+  .tag { font-size: 0.74rem; padding: 0.12rem 0.5rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.2rem; }
+  .tag-scad { background: #F3EEE2; color: var(--text-light); }
+  .tag-scad.scaduto { background: #FBE9E7; color: var(--red); font-weight: 700; }
+  .tag-scad.oggi { background: #FFF3DC; color: #9A6B00; font-weight: 700; }
+  .tag-arnia { background: #EAF0F7; color: var(--blue); }
+  .cl-prog { font-size: 0.72rem; color: var(--text-light); font-weight: 400; }
+  .todo-del { background: none; border: none; color: var(--red); font-size: 1rem; opacity: 0.5; cursor: pointer; padding: 0.2rem; flex-shrink: 0; }
+
+  /* Checklist mini */
+  .cl-mini { margin-top: 0.5rem; padding-top: 0.45rem; border-top: 1px dashed var(--cream-dark); }
+  .cl-row { display: flex; gap: 0.45rem; align-items: center; font-size: 0.85rem; color: var(--text-light); padding: 0.18rem 0; cursor: pointer; }
+  .cl-box { width: 16px; height: 16px; border: 1.5px solid var(--brown-light); border-radius: 4px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 0.64rem; color: white; }
+  .cl-box.done { background: var(--green); border-color: var(--green); }
+  .cl-row.done span { text-decoration: line-through; opacity: 0.6; }
+
+  .empty { text-align: center; color: var(--text-light); font-style: italic; padding: 3rem 1.5rem; }
+  .empty .big { font-size: 3rem; display: block; margin-bottom: 0.8rem; }
+
+  /* Tasto largo aggiungi */
+  .add-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 0.9rem 1.2rem calc(0.9rem + env(safe-area-inset-bottom));
+    background: linear-gradient(transparent, var(--cream) 35%); z-index: 15; }
+  .add-btn { width: 100%; padding: 0.95rem; border-radius: 12px; border: none;
+    background: linear-gradient(135deg, var(--amber-light), var(--amber)); color: white; font-family: inherit;
+    font-size: 1.05rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(200,134,10,0.4);
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+
+  /* Modale */
+  .modal-ov { position: fixed; inset: 0; background: rgba(26,18,8,0.5); z-index: 100; display: none;
+    align-items: flex-end; justify-content: center; }
+  .modal-ov.open { display: flex; }
+  .modal { background: var(--cream); width: 100%; max-width: 500px; border-radius: 18px 18px 0 0;
+    padding: 1.3rem 1.2rem calc(1.3rem + env(safe-area-inset-bottom)); max-height: 92vh; overflow-y: auto; }
+  .modal h3 { font-family: 'Playfair Display', serif; color: var(--brown); margin-bottom: 1rem; }
+  .fg { margin-bottom: 0.9rem; }
+  .fg label { display: block; font-size: 0.74rem; color: var(--text-light); font-weight: 700; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.4px; }
+  .fg input, .fg select, .fg textarea { width: 100%; padding: 0.75rem 0.85rem; border: 1.5px solid var(--cream-dark);
+    border-radius: 8px; font-family: inherit; font-size: 1rem; background: white; color: var(--text); -webkit-appearance: none; appearance: none; }
+  .fg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+  .cl-edit-row { display: flex; gap: 0.5rem; align-items: center; background: white; border-radius: 6px; padding: 0.4rem 0.6rem; margin-bottom: 0.35rem; }
+  .cl-edit-row .cl-box { cursor: pointer; }
+  .cl-add { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
+  .cl-add input { flex: 1; }
+  .btn { padding: 0.85rem 1rem; border-radius: 10px; border: none; font-family: inherit; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .btn-amber { background: linear-gradient(135deg, var(--amber-light), var(--amber)); color: white; }
+  .btn-ghost { background: white; border: 1.5px solid var(--cream-dark); color: var(--text); }
+  .btn-mini { padding: 0.5rem 0.8rem; font-size: 0.85rem; border-radius: 8px; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 5.5rem; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--dark); color: white; padding: 0.7rem 1.2rem; border-radius: 10px; font-size: 0.9rem;
+    opacity: 0; transition: all 0.3s; z-index: 200; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top">
+    <span style="font-size:1.4rem">📋</span>
+    <div>
+      <h1>Da fare</h1>
+    </div>
+    <div class="drive-dot" id="driveDot" title="Google Drive"></div>
+  </div>
+  <div class="sub" id="headerSub">Il tuo apiario</div>
+</header>
+
+<!-- LOGIN / LOADING -->
+<div id="driveLoginScreen">
+  <div class="bee">📋</div>
+  <h2>Connetti Google Drive</h2>
+  <p>Accedi con il tuo account Google per vedere le cose da fare dell'apiario.</p>
+  <button class="btn-google" onclick="driveLogin()">
+    <svg width="18" height="18" viewBox="0 0 48 48">
+      <path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+      <path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+      <path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+    </svg>
+    Accedi con Google
+  </button>
+</div>
+
+<!-- APP -->
+<div id="appContent" style="display:none">
+  <div class="glance">
+    <div class="glance-card g-scaduti" id="gcScaduti" onclick="toggleGlanceFiltro('scaduto')">
+      <div class="num" id="numScaduti">0</div><div class="lbl">🔴 Scaduti</div>
+    </div>
+    <div class="glance-card g-scadenza" id="gcScadenza" onclick="toggleGlanceFiltro('scadenza')">
+      <div class="num" id="numScadenza">0</div><div class="lbl">🟠 In scadenza</div>
+    </div>
+    <div class="glance-card g-futuri" id="gcFuturi" onclick="toggleGlanceFiltro('futuro')">
+      <div class="num" id="numFuturi">0</div><div class="lbl">📆 Futuri</div>
+    </div>
+  </div>
+
+  <div class="vista-toggle">
+    <button class="vista-btn on" id="vistaScadenza" onclick="setVista('scadenza')">🗓️ Per scadenza</button>
+    <button class="vista-btn" id="vistaCategoria" onclick="setVista('categoria')">🏷️ Per categoria</button>
+  </div>
+
+  <div class="filtro-attivo" id="filtroAttivo">
+    <span id="filtroAttivoLabel"></span>
+    <button onclick="clearGlanceFiltro()">✕ Mostra tutti</button>
+  </div>
+
+  <div class="lista" id="listaTodo"></div>
+</div>
+
+<!-- Tasto aggiungi -->
+<div class="add-bar" id="addBar" style="display:none">
+  <button class="add-btn" onclick="openTodoModalM()">＋ Nuovo compito</button>
+</div>
+
+<!-- MODALE -->
+<div class="modal-ov" id="todoModalM">
+  <div class="modal">
+    <h3 id="modalTitleM">📋 Nuovo compito</h3>
+    <input type="hidden" id="editIdM">
+    <input type="hidden" id="articoloIdM">
+    <div class="fg">
+      <label>Cosa fare</label>
+      <input type="text" id="testoM" placeholder="Es. Controllo covata">
+    </div>
+    <div class="fg-row">
+      <div class="fg">
+        <label>Categoria</label>
+        <select id="categoriaM"></select>
+      </div>
+      <div class="fg">
+        <label>Priorità</label>
+        <select id="prioritaM">
+          <option value="urgente">🔴 Urgente</option>
+          <option value="alta">🟠 Alta</option>
+          <option value="media" selected>🟡 Media</option>
+          <option value="bassa">⚪ Bassa</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg-row">
+      <div class="fg">
+        <label>Scadenza</label>
+        <input type="date" id="scadenzaM">
+      </div>
+      <div class="fg">
+        <label>Arnia collegata</label>
+        <select id="arniaM"></select>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Checklist (opzionale)</label>
+      <div id="checklistEditorM" style="display:flex;flex-direction:column;gap:0.35rem;margin-bottom:0.4rem"></div>
+      <div class="cl-add">
+        <input type="text" id="checklistInputM" placeholder="Aggiungi voce..." onkeydown="if(event.key==='Enter'){event.preventDefault();aggiungiChecklistM();}">
+        <button type="button" class="btn btn-ghost btn-mini" onclick="aggiungiChecklistM()">+ Aggiungi</button>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Note (opzionale)</label>
+      <textarea id="noteM" rows="2" placeholder="Dettagli..."></textarea>
+    </div>
+    <div style="display:flex;gap:0.6rem;margin-top:0.5rem">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeTodoModalM()">Annulla</button>
+      <button class="btn btn-amber" style="flex:1.5" onclick="saveTodoM()">💾 Salva</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toastM"></div>
+
+<script>
+// ===== STATO =====
+let todos = [];
+let arnie = [];        // per il collegamento arnia
+let _vista = 'scadenza';
+let _glanceFiltro = null;   // null | 'scaduto' | 'scadenza' | 'futuro'
+let _checklistTempM = [];
+
+// Categorie (allineate a js/todo.js dell'app principale)
+const TODO_CATEGORIE = [
+  { id: 'trattamento',    label: '💊 Trattamento',    color: '#8A2C2C' },
+  { id: 'controllo',      label: '🔍 Controllo',      color: '#2C5F8A' },
+  { id: 'manutenzione',   label: '🔧 Manutenzione',   color: '#5C3A10' },
+  { id: 'amministrazione',label: '📄 Amministrazione', color: '#6B4A20' },
+  { id: 'acquisto',       label: '🛒 Acquisto',       color: '#4A7C3F' },
+  { id: 'altro',          label: '📋 Altro',          color: '#8B5E2A' },
+];
+const PRIORITA_ORD = { urgente: 0, alta: 1, media: 2, bassa: 3 };
+
+// ===== HELPER =====
+function escM(s) {
+  if(s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(iso) {
+  if(!iso) return '';
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('it-IT', { day:'2-digit', month:'2-digit' });
+}
+function statoScad(scad) {
+  if(!scad) return 'futuro';   // senza scadenza = "prima o poi" → conta tra i Futuri
+  const oggi = new Date(); oggi.setHours(0,0,0,0);
+  const d = new Date(scad); d.setHours(0,0,0,0);
+  if(isNaN(d.getTime())) return 'futuro';
+  const diff = Math.round((d - oggi) / 86400000);
+  if(diff < 0) return 'scaduto';
+  if(diff <= 10) return 'scadenza';   // range 10 giorni (oggi incluso)
+  return 'futuro';
+}
+function isOggi(scad) {
+  if(!scad) return false;
+  const oggi = new Date(); oggi.setHours(0,0,0,0);
+  const d = new Date(scad); d.setHours(0,0,0,0);
+  return d.getTime() === oggi.getTime();
+}
+function ordina(arr) {
+  return arr.slice().sort((a,b) => {
+    const pa = PRIORITA_ORD[a.priorita] ?? 9, pb = PRIORITA_ORD[b.priorita] ?? 9;
+    if(pa !== pb) return pa - pb;
+    return (a.scadenza||'9999').localeCompare(b.scadenza||'9999');
+  });
+}
+
+// ===== LOGIN / LOADING =====
+function showLoadingScreen(msg) {
+  document.getElementById('driveLoginScreen').style.display = 'flex';
+  document.getElementById('driveLoginScreen').innerHTML =
+    `<div class="spinner"></div><h2 style="color:var(--brown)">${msg}</h2><p style="color:var(--text-light)">Connessione a Google Drive...</p>`;
+}
+function showLoginScreen() {
+  document.getElementById('driveLoginScreen').style.display = 'flex';
+  document.getElementById('driveLoginScreen').innerHTML = `
+    <div class="bee">📋</div>
+    <h2>Connetti Google Drive</h2>
+    <p>Accedi con il tuo account Google per vedere le cose da fare dell'apiario.</p>
+    <button class="btn-google" onclick="driveLogin()">
+      <svg width="18" height="18" viewBox="0 0 48 48">
+        <path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Accedi con Google
+    </button>`;
+}
+
+// ===== DRIVE INIT =====
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    initDrive(
+      async () => {
+        showLoadingScreen('🔄 Caricamento...');
+        try {
+          const db = await Storage.leggiFile(FILENAME_DB);
+          if(db && db.arnie) arnie = db.arnie;
+          const t = await Storage.leggiFile(FILENAME_TODO);
+          if(t && Array.isArray(t.todos)) todos = t.todos;
+        } catch(e) { console.error('[Todo PWA] Errore caricamento:', e); }
+        showApp();
+      },
+      () => showLoadingScreen('🔄 Caricamento...'),
+      () => showLoginScreen()
+    );
+  }, 600);
+});
+
+function showApp() {
+  document.getElementById('driveLoginScreen').style.display = 'none';
+  document.getElementById('appContent').style.display = 'block';
+  document.getElementById('addBar').style.display = 'block';
+  document.getElementById('driveDot').classList.add('connected');
+  // popola categoria modale
+  document.getElementById('categoriaM').innerHTML = TODO_CATEGORIE.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+  // data odierna nel sottotitolo
+  const oggi = new Date().toLocaleDateString('it-IT', { day:'numeric', month:'long' });
+  document.getElementById('headerSub').textContent = 'Il tuo apiario · ' + oggi;
+  render();
+}
+
+// ===== RENDER =====
+function attivi() { return todos.filter(t => t.stato !== 'fatto'); }
+
+function render() {
+  try {
+    const act = attivi();
+    // Conteggi colpo d'occhio
+    const nScad = act.filter(t => statoScad(t.scadenza) === 'scaduto').length;
+    const nScadenza = act.filter(t => statoScad(t.scadenza) === 'scadenza').length;
+    const nFut = act.filter(t => statoScad(t.scadenza) === 'futuro').length;
+    document.getElementById('numScaduti').textContent = nScad;
+    document.getElementById('numScadenza').textContent = nScadenza;
+    document.getElementById('numFuturi').textContent = nFut;
+
+    // Evidenzia card filtro attiva
+    document.getElementById('gcScaduti').classList.toggle('sel', _glanceFiltro === 'scaduto');
+    document.getElementById('gcScadenza').classList.toggle('sel', _glanceFiltro === 'scadenza');
+    document.getElementById('gcFuturi').classList.toggle('sel', _glanceFiltro === 'futuro');
+
+    // Banner filtro
+    const fa = document.getElementById('filtroAttivo');
+    if(_glanceFiltro) {
+      const lab = { scaduto: '🔴 Solo scaduti', scadenza: '🟠 Solo in scadenza (10 giorni)', futuro: '📆 Solo futuri' }[_glanceFiltro];
+      document.getElementById('filtroAttivoLabel').textContent = lab;
+      fa.style.display = 'flex';
+    } else {
+      fa.style.display = 'none';
+    }
+
+    // Filtra items
+    let items = act;
+    if(_glanceFiltro) items = items.filter(t => statoScad(t.scadenza) === _glanceFiltro);
+
+    const cont = document.getElementById('listaTodo');
+    if(items.length === 0) {
+      const msg = todos.length === 0 ? 'Nessun compito ancora.<br>Aggiungine uno!' : 'Nessun compito per questo filtro.';
+      cont.innerHTML = `<div class="empty"><span class="big">📋</span>${msg}</div>`;
+      return;
+    }
+
+    const gruppi = _vista === 'scadenza' ? raggruppaScadenza(items) : raggruppaCategoria(items);
+    cont.innerHTML = gruppi.map(g => g.items.length === 0 ? '' :
+      `<div class="cat-block">
+        <div class="cat-head" style="border-color:${g.color||'var(--cream-dark)'}">
+          <span class="cat-name" style="color:${g.color||'var(--brown)'}">${g.label}</span>
+          <span class="cat-cnt">${g.items.length}</span>
+        </div>
+        ${g.items.map(renderCard).join('')}
+      </div>`).join('');
+  } catch(err) {
+    console.error('[Todo PWA] Errore render:', err.message);
+  }
+}
+
+function raggruppaScadenza(items) {
+  const map = { scaduto: [], scadenza: [], futuro: [] };
+  items.forEach(t => { (map[statoScad(t.scadenza)] || map.futuro).push(t); });
+  const out = [];
+  if(map.scaduto.length) out.push({ label: '🔴 Scaduti', color: '#C0392B', items: ordina(map.scaduto) });
+  if(map.scadenza.length) out.push({ label: '🟠 In scadenza (10 giorni)', color: '#9A6B00', items: ordina(map.scadenza) });
+  if(map.futuro.length) out.push({ label: '📆 Futuri', color: 'var(--blue)', items: ordina(map.futuro) });
+  return out;
+}
+function raggruppaCategoria(items) {
+  return TODO_CATEGORIE.map(c => ({
+    label: c.label, color: c.color,
+    items: ordina(items.filter(t => (t.categoria||'altro') === c.id))
+  })).filter(g => g.items.length > 0);
+}
+
+function renderCard(t) {
+  const cat = TODO_CATEGORIE.find(c => c.id === (t.categoria||'altro')) || TODO_CATEGORIE[5];
+  const prioClass = t.priorita === 'urgente' ? 'urg' : (t.priorita === 'alta' ? 'alta' : '');
+  const st = statoScad(t.scadenza);
+
+  let scadHtml = '';
+  if(t.scadenza) {
+    const cls = st === 'scaduto' ? 'scaduto' : (isOggi(t.scadenza) ? 'oggi' : '');
+    const txt = st === 'scaduto' ? 'Scad. ' + fmtDate(t.scadenza) : (isOggi(t.scadenza) ? 'Oggi' : fmtDate(t.scadenza));
+    scadHtml = `<span class="tag tag-scad ${cls}">📅 ${txt}</span>`;
+  }
+  let arniaHtml = '';
+  if(t.arniaId) {
+    const a = arnie.find(x => x.id === t.arniaId);
+    if(a) arniaHtml = `<span class="tag tag-arnia">🏠 #${a.num}</span>`;
+  }
+  // categoria mostrata solo in vista per scadenza (in vista categoria è già il titolo del gruppo)
+  const catHtml = _vista === 'scadenza' ? `<span class="tag" style="background:${cat.color}20;color:${cat.color}">${cat.label}</span>` : '';
+
+  // Checklist
+  const hasChecklist = Array.isArray(t.checklist) && t.checklist.length > 0;
+  let progHtml = '', clBlock = '';
+  if(hasChecklist) {
+    const fatti = t.checklist.filter(c => c.fatto).length;
+    progHtml = ` <span class="cl-prog">· ${fatti}/${t.checklist.length}</span>`;
+    clBlock = `<div class="cl-mini">` + t.checklist.map((c, i) =>
+      `<div class="cl-row ${c.fatto?'done':''}" onclick="event.stopPropagation();toggleChecklist('${t.id}',${i})">
+        <div class="cl-box ${c.fatto?'done':''}">${c.fatto?'✓':''}</div><span>${escM(c.testo)}</span>
+      </div>`).join('') + `</div>`;
+  }
+
+  return `
+    <div class="todo ${prioClass}">
+      <div class="check" onclick="event.stopPropagation();toggleFatto('${t.id}')"></div>
+      <div class="todo-body" onclick="openTodoModalM('${t.id}')">
+        <div class="todo-testo">${escM(t.testo)}${progHtml}</div>
+        <div class="todo-meta">${catHtml}${arniaHtml}${scadHtml}</div>
+        ${clBlock}
+      </div>
+      <button class="todo-del" onclick="deleteTodoM('${t.id}')">🗑</button>
+    </div>`;
+}
+
+// ===== VISTA / FILTRI =====
+function setVista(v) {
+  _vista = v;
+  document.getElementById('vistaScadenza').classList.toggle('on', v === 'scadenza');
+  document.getElementById('vistaCategoria').classList.toggle('on', v === 'categoria');
+  render();
+}
+function toggleGlanceFiltro(f) {
+  _glanceFiltro = (_glanceFiltro === f) ? null : f;
+  render();
+}
+function clearGlanceFiltro() { _glanceFiltro = null; render(); }
+
+// ===== AZIONI =====
+async function persisti() {
+  try {
+    await Storage.salvaFile(FILENAME_TODO, { version: 1, savedAt: new Date().toISOString(), todos });
+  } catch(e) {
+    console.error('[Todo PWA] Errore salvataggio:', e);
+    toast('⚠️ Errore salvataggio');
+  }
+}
+function toggleFatto(id) {
+  todos = todos.map(t => t.id !== id ? t : {
+    ...t, stato: t.stato === 'fatto' ? 'da_fare' : 'fatto',
+    dataCompletamento: t.stato === 'fatto' ? null : new Date().toISOString()
+  });
+  render(); persisti();
+  const t = todos.find(x => x.id === id);
+  if(t && t.stato === 'fatto') toast('✅ Completato');
+}
+function toggleChecklist(todoId, idx) {
+  todos = todos.map(t => {
+    if(t.id !== todoId || !Array.isArray(t.checklist)) return t;
+    return { ...t, checklist: t.checklist.map((c,i) => i===idx ? {...c, fatto: !c.fatto} : c) };
+  });
+  render(); persisti();
+}
+function deleteTodoM(id) {
+  if(!confirm('Eliminare questo compito?')) return;
+  todos = todos.filter(t => t.id !== id);
+  render(); persisti();
+  toast('🗑 Eliminato');
+}
+
+// ===== MODALE =====
+function openTodoModalM(id) {
+  _checklistTempM = [];
+  // arnie
+  const selA = document.getElementById('arniaM');
+  const arnieSorted = [...arnie].filter(a=>!a.annoDismissione).sort((a,b)=>(parseInt(a.num)||0)-(parseInt(b.num)||0));
+  selA.innerHTML = '<option value="">— Nessuna —</option>' + arnieSorted.map(a => `<option value="${a.id}">🏠 #${a.num}${a.nome?' '+escM(a.nome):''}</option>`).join('');
+
+  if(id && typeof id === 'string') {
+    const t = todos.find(x => x.id === id);
+    if(t) {
+      document.getElementById('modalTitleM').textContent = '✏️ Modifica compito';
+      document.getElementById('editIdM').value = id;
+      document.getElementById('testoM').value = t.testo || '';
+      document.getElementById('categoriaM').value = t.categoria || 'altro';
+      document.getElementById('prioritaM').value = t.priorita || 'media';
+      document.getElementById('scadenzaM').value = t.scadenza || '';
+      selA.value = t.arniaId || '';
+      document.getElementById('noteM').value = t.note || '';
+      document.getElementById('articoloIdM').value = t.articoloId || '';
+      _checklistTempM = Array.isArray(t.checklist) ? t.checklist.map(c => ({...c})) : [];
+    }
+  } else {
+    document.getElementById('modalTitleM').textContent = '📋 Nuovo compito';
+    document.getElementById('editIdM').value = '';
+    document.getElementById('testoM').value = '';
+    document.getElementById('categoriaM').value = 'altro';
+    document.getElementById('prioritaM').value = 'media';
+    document.getElementById('scadenzaM').value = '';
+    selA.value = '';
+    document.getElementById('noteM').value = '';
+    document.getElementById('articoloIdM').value = '';
+  }
+  renderChecklistEditorM();
+  document.getElementById('checklistInputM').value = '';
+  document.getElementById('todoModalM').classList.add('open');
+}
+function closeTodoModalM() { document.getElementById('todoModalM').classList.remove('open'); }
+
+function renderChecklistEditorM() {
+  const c = document.getElementById('checklistEditorM');
+  if(_checklistTempM.length === 0) { c.innerHTML = ''; return; }
+  c.innerHTML = _checklistTempM.map((it, i) =>
+    `<div class="cl-edit-row">
+      <div class="cl-box ${it.fatto?'done':''}" onclick="toggleChecklistTempM(${i})">${it.fatto?'✓':''}</div>
+      <span style="flex:1${it.fatto?';text-decoration:line-through;opacity:0.6':''}">${escM(it.testo)}</span>
+      <button class="todo-del" onclick="rimuoviChecklistM(${i})">✕</button>
+    </div>`).join('');
+}
+function aggiungiChecklistM() {
+  const inp = document.getElementById('checklistInputM');
+  const v = inp.value.trim();
+  if(!v) return;
+  _checklistTempM.push({ testo: v, fatto: false });
+  inp.value = '';
+  renderChecklistEditorM();
+  inp.focus();
+}
+function rimuoviChecklistM(i) { _checklistTempM.splice(i,1); renderChecklistEditorM(); }
+function toggleChecklistTempM(i) { if(_checklistTempM[i]) { _checklistTempM[i].fatto = !_checklistTempM[i].fatto; renderChecklistEditorM(); } }
+
+function saveTodoM() {
+  try {
+    const testo = document.getElementById('testoM').value.trim();
+    if(!testo) { alert('Scrivi cosa fare'); return; }
+    const editId = document.getElementById('editIdM').value;
+    const entry = {
+      testo,
+      categoria: document.getElementById('categoriaM').value,
+      priorita: document.getElementById('prioritaM').value,
+      scadenza: document.getElementById('scadenzaM').value,
+      arniaId: document.getElementById('arniaM').value || null,
+      articoloId: document.getElementById('articoloIdM').value || null,
+      note: document.getElementById('noteM').value.trim(),
+      checklist: _checklistTempM.map(c => ({ testo: c.testo, fatto: !!c.fatto })),
+    };
+    if(editId) {
+      todos = todos.map(t => t.id === editId ? { ...t, ...entry } : t);
+    } else {
+      todos.push({
+        id: Date.now().toString() + Math.random().toString(36).slice(2),
+        ...entry, stato: 'da_fare',
+        dataCreazione: new Date().toISOString(), dataCompletamento: null,
+      });
+    }
+    closeTodoModalM();
+    render(); persisti();
+    toast('✅ Salvato');
+  } catch(err) {
+    console.error('[Todo PWA] Errore saveTodoM:', err.message);
+    alert('Errore nel salvataggio.');
+  }
+}
+
+// ===== TOAST =====
+let _toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toastM');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,2520 @@
+<!DOCTYPE html>
+<!-- FILE VERSION: 2026-05-28.3 · etichette.html -->
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generatore etichette</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐝</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@400;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="shared.js?v=20260567"></script>
+<script src="js/storage.js?v=20260567"></script>
+<style>
+  /* ===== THEMING APP ===== */
+  :root {
+    --bg: #FBF5E6;
+    --panel: #ffffff;
+    --ink: #2A1A05;
+    --muted: #8B6F47;
+    --accent: #C8860A;
+    --amber: #C8860A;
+    --amber-glow: #F5C842;
+    --amber-pale: #FDF3DC;
+    --amber-light: #E8A020;
+    --brown: #5C3A10;
+    --brown-light: #8B5E2A;
+    --green: #4A7C3F;
+    --red: #B53A2C;
+    --cream: #FBF5E6;
+    --cream-dark: #F0E6CC;
+    --dark: #1A1208;
+    --dark-mid: #2A1A0F;
+    --text: #2A1A05;
+    --text-light: #8B6F47;
+    --shadow: rgba(140,90,30,0.08);
+    --border: var(--cream-dark);
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Crimson Pro', -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    margin: 0;
+    padding: 0;
+  }
+
+  /* HEADER APP */
+  .app-header {
+    background: linear-gradient(135deg, var(--dark-mid), var(--dark));
+    color: var(--cream);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+  }
+  .app-header-left { display: flex; align-items: center; gap: 0.6rem; }
+  .app-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--amber-glow);
+    margin: 0;
+  }
+  .back-link {
+    color: rgba(245,200,66,0.75);
+    text-decoration: none;
+    font-size: 0.82rem;
+    border: 1px solid rgba(200,134,10,0.4);
+    padding: 0.32rem 0.85rem;
+    border-radius: 20px;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+  }
+  .back-link:hover { background: rgba(200,134,10,0.15); color: var(--amber-glow); }
+
+  .header-status {
+    display: flex; align-items: center; gap: 0.7rem;
+    font-size: 0.8rem;
+    color: var(--cream-dark);
+  }
+  .drive-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: #8A6D3B;
+    transition: background 0.3s;
+  }
+  .drive-dot.connected { background: #5D8C44; box-shadow: 0 0 8px rgba(93,140,68,0.6); }
+
+  /* LOGIN GATE */
+  #loginGate {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    padding: 2rem;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  #loginGate h2 {
+    font-family: 'Playfair Display', serif;
+    color: var(--brown);
+    font-size: 1.6rem;
+    margin: 0;
+  }
+  #loginGate p {
+    color: var(--text-light);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    max-width: 480px;
+    margin: 0;
+  }
+  .btn-google {
+    background: white;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    padding: 0.85rem 1.8rem;
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    color: #333;
+  }
+
+  h1.title-page {
+    font-family: 'Playfair Display', serif;
+    margin: 0 0 4px 0;
+    font-size: 1.6rem;
+    color: var(--brown);
+  }
+  .sub { color: var(--text-light); font-size: 0.95rem; margin-bottom: 1.5rem; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 440px 1fr;
+    gap: 24px;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 1.5rem;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--cream-dark);
+    border-radius: 12px;
+    padding: 1.1rem 1.2rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .panel h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.05rem;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--brown);
+    margin: 0 0 0.9rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .panel h2 .toggle {
+    font-size: 0.78rem;
+    color: var(--amber);
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: 0;
+    background: var(--amber-pale);
+    border: 1px solid var(--cream-dark);
+    padding: 0.3rem 0.7rem;
+    border-radius: 14px;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .panel h2 .toggle:hover { border-color: var(--amber); }
+
+  /* ====== RIGHE PRODOTTO ====== */
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 90px 90px 60px 28px;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .row select, .row input {
+    padding: 0.5rem 0.6rem;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-family: inherit;
+    background: white;
+    color: var(--ink);
+    min-width: 0;
+    transition: border-color 0.15s;
+  }
+  .row select:focus, .row input:focus { outline: none; border-color: var(--amber); }
+  .row .del {
+    background: none;
+    border: none;
+    color: var(--red);
+    cursor: pointer;
+    font-size: 1.05rem;
+    padding: 0;
+    opacity: 0.65;
+    transition: opacity 0.15s;
+  }
+  .row .del:hover { opacity: 1; }
+  .row-header {
+    display: grid;
+    grid-template-columns: 1fr 90px 90px 60px 28px;
+    gap: 6px;
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    padding: 0 4px;
+  }
+
+  button.primary {
+    background: linear-gradient(135deg, var(--amber-light), var(--amber));
+    color: white;
+    border: none;
+    padding: 0.6rem 1.1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-family: inherit;
+    font-weight: 700;
+    transition: transform 0.1s, box-shadow 0.15s;
+    box-shadow: 0 2px 8px rgba(200,134,10,0.2);
+  }
+  button.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(200,134,10,0.32); }
+  button.secondary {
+    background: var(--amber-pale);
+    color: var(--brown);
+    border: 1.5px solid var(--amber);
+    padding: 0.55rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-family: inherit;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  button.secondary:hover { background: #fbe9c8; }
+
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .summary {
+    margin-top: 14px;
+    padding: 10px;
+    background: #faf7f1;
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* ====== EDITOR TIPI PRODOTTO ====== */
+  .types-list { font-size: 13px; }
+  .type-item {
+    display: grid;
+    grid-template-columns: 1fr 90px 28px;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .type-item input[type="text"], .type-item input[type="color"] {
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .type-item input[type="color"] {
+    height: 32px;
+    padding: 2px;
+    cursor: pointer;
+  }
+
+  /* ====== EDITOR STILE ====== */
+  .style-category-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding: 6px;
+    background: rgba(200,134,10,0.06);
+    border-radius: 8px;
+    flex-wrap: wrap;
+  }
+  .style-cat-tab {
+    flex: 1;
+    min-width: 90px;
+    padding: 10px 14px;
+    background: white;
+    border: 1.5px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all 0.15s;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .style-cat-tab:hover {
+    background: rgba(255,255,255,0.7);
+    color: var(--ink);
+  }
+  .style-cat-tab.active {
+    background: white;
+    border-color: var(--accent);
+    color: var(--ink);
+    box-shadow: 0 2px 6px rgba(200,134,10,0.15);
+  }
+  .style-cat-tab .cat-count {
+    background: rgba(200,134,10,0.15);
+    color: var(--accent);
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 9px;
+    font-weight: 700;
+  }
+  .style-cat-tab.active .cat-count {
+    background: var(--accent);
+    color: white;
+  }
+  .style-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .style-tab {
+    padding: 8px 14px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .style-tab .shape-icon {
+    opacity: 0.5;
+    font-size: 11px;
+    margin-right: 3px;
+  }
+  .style-tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+  }
+  .style-tab.active .shape-icon {
+    opacity: 0.8;
+  }
+  .style-editor {
+    font-size: 13px;
+  }
+  .editor-element {
+    background: #faf7f1;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+  .editor-element .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .editor-element .label-name {
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .editor-element .visible-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .editor-element .controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .editor-element .row-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .editor-element input[type="text"],
+  .editor-element select,
+  .editor-element input[type="number"] {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 12px;
+    background: white;
+  }
+  .editor-element label.field {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .editor-element.disabled { opacity: 0.5; }
+
+  /* ====== ANTEPRIMA E STAMPA A4 ====== */
+  .preview-wrap {
+    background: var(--cream-dark);
+    padding: 24px 20px;
+    border-radius: 12px;
+    overflow: auto;
+    border: 1px solid var(--cream-dark);
+  }
+  .a4 {
+    /* dimensioni e padding applicate via JS in base al formato */
+    background: white;
+    margin: 0 auto;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.22);
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    box-sizing: border-box;
+    /* Scala automaticamente per stare nel container, mantenendo le proporzioni */
+    transform-origin: top center;
+  }
+
+  /* Singola etichetta - contenitore base (le dimensioni sono applicate via JS) */
+  .label {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    /* sfondo trasparente */
+  }
+
+  /* Etichette tonde: rendering SVG full-bleed */
+  .label.round {
+    overflow: visible;
+  }
+  .label.round .round-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* crocini di taglio */
+  .label .crop {
+    position: absolute;
+    background: #999;
+  }
+  .label .crop.h { width: 1.5mm; height: 0.15mm; }
+  .label .crop.v { width: 0.15mm; height: 1.5mm; }
+  .label .crop.tl-h { top: 0; left: -1.5mm; }
+  .label .crop.tr-h { top: 0; right: -1.5mm; }
+  .label .crop.bl-h { bottom: 0; left: -1.5mm; }
+  .label .crop.br-h { bottom: 0; right: -1.5mm; }
+  .label .crop.tl-v { top: -1.5mm; left: 0; }
+  .label .crop.tr-v { top: -1.5mm; right: 0; }
+  .label .crop.bl-v { bottom: -1.5mm; left: 0; }
+  .label .crop.br-v { bottom: -1.5mm; right: 0; }
+
+  /* cornici (rustico/vintage) */
+  .label .frame-outer,
+  .label .frame-inner {
+    position: absolute;
+    pointer-events: none;
+  }
+  .style-rustico .frame-outer { top: 1.5mm; left: 1.5mm; right: 1.5mm; bottom: 1.5mm; border: 1.2px solid currentColor; }
+  .style-rustico .frame-inner { top: 2.5mm; left: 2.5mm; right: 2.5mm; bottom: 2.5mm; border: 0.4px solid currentColor; }
+  .style-vintage .frame-outer { top: 1.5mm; left: 1.5mm; right: 1.5mm; bottom: 1.5mm; border: 0.8px solid currentColor; border-radius: 3mm; }
+  .style-vintage .frame-inner { top: 2.8mm; left: 2.8mm; right: 2.8mm; bottom: 2.8mm; border: 0.3px solid currentColor; border-radius: 2mm; }
+
+  /* elementi base condivisi */
+  .label .el { line-height: 1.1; }
+  .label .el.spacer-top { margin-top: 0.5mm; }
+  .label .dot {
+    border-radius: 50%;
+    margin: 0 auto 1mm auto;
+  }
+  .label .line {
+    height: 0.3mm;
+    background: #2a2a2a;
+    margin: 0.5mm auto;
+  }
+  .label .deco-line {
+    height: 0.3mm;
+    background: currentColor;
+    margin: 0.5mm auto;
+  }
+  .label .name-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5mm;
+  }
+  .label .diamonds { display: flex; gap: 0.6mm; }
+  .label .diamond {
+    width: 1mm;
+    height: 1mm;
+    background: currentColor;
+    transform: rotate(45deg);
+  }
+
+  /* ====== STAMPA ====== */
+  @page {
+    margin: 0;
+  }
+  /* Pagine per i formati landscape (rettangolari) */
+  @page landscape {
+    size: A4 landscape;
+    margin: 0;
+  }
+  @page portrait {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  @media print {
+    /* Reset body e pagina */
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+    body { background: white !important; padding: 0 !important; margin: 0 !important; }
+
+    /* Nascondi TUTTA la chrome dell'app */
+    .app-header,
+    #loginGate,
+    h1.title-page,
+    .sub,
+    .panel,
+    .actions,
+    .summary { display: none !important; }
+
+    /* Layout: il container appContent e layout passano a block fluido */
+    #appContent { display: block !important; padding: 0 !important; margin: 0 !important; }
+    .layout {
+      display: block !important;
+      grid-template-columns: none !important;
+      gap: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: none !important;
+    }
+
+    /* Preview wrap senza sfondo grigio */
+    .preview-wrap {
+      background: white !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border-radius: 0 !important;
+      overflow: visible !important;
+    }
+
+    /* PAGE A4: dimensioni applicate via JS (inline styles vincono il "!important" qui) */
+    .preview-wrap .a4 {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      align-content: flex-start !important;
+      margin: 0 !important;
+      background: white !important;
+      box-shadow: none !important;
+      page-break-after: always;
+      page-break-inside: avoid;
+      box-sizing: border-box;
+      /* IMPORTANTE: annulla lo scaling usato in anteprima */
+      transform: none !important;
+      margin-bottom: 0 !important;
+    }
+    .preview-wrap .a4:last-child { page-break-after: auto; }
+
+    /* Etichetta: page-break-inside avoid (dimensioni via inline) */
+    .label {
+      page-break-inside: avoid;
+    }
+  }
+
+  .empty-msg {
+    color: var(--muted);
+    text-align: center;
+    padding: 40px;
+    font-style: italic;
+    width: 100%;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER APP -->
+<div class="app-header">
+  <div class="app-header-left">
+    <span style="font-size:1.5rem">🏷️</span>
+    <h1>Generatore etichette</h1>
+  </div>
+  <div class="header-status">
+    <a href="index.html" class="back-link">← Apiario</a>
+    <span class="drive-dot" id="driveDot"></span>
+  </div>
+</div>
+
+<!-- LOGIN GATE -->
+<div id="loginGate" style="display:none">
+  <div style="font-size:4rem">🐝</div>
+  <h2>Connetti Google Drive</h2>
+  <p>Per usare il generatore di etichette è necessario accedere con Google.<br>I tuoi stili e tipi di prodotto verranno sincronizzati con l'apiario.</p>
+  <button class="btn-google" onclick="driveLogin()">
+    <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+    Accedi con Google
+  </button>
+  <p id="loginGateStatus" style="font-size:0.85rem;font-style:italic;margin-top:0.5rem">⏳ Caricamento...</p>
+</div>
+
+<!-- APP CONTENT -->
+<div id="appContent" style="display:none">
+
+<div class="sub" style="padding:1.2rem 1.5rem 0">Componi il tuo foglio A4, vedi l'anteprima e stampa (o "Salva come PDF" dalla finestra di stampa). Etichette 50×30 mm, sfondo trasparente.</div>
+
+<div class="layout">
+
+  <!-- ====== COLONNA SINISTRA: CONTROLLI ====== -->
+  <div>
+    <!-- FORMATO -->
+    <div class="panel">
+      <h2>📐 Formato</h2>
+      <select id="formatSelector" onchange="changeFormat(this.value)" style="width:100%;padding:8px 10px;font-size:14px;font-family:inherit;border:1px solid var(--border);border-radius:4px;background:var(--panel);color:var(--ink)"></select>
+      <div class="summary" id="formatInfo" style="margin-top:8px"></div>
+    </div>
+
+    <div class="panel">
+      <h2>🏷️ Cosa stampare</h2>
+      <div class="row-header">
+        <div>Prodotto</div>
+        <div>Stile</div>
+        <div>Peso</div>
+        <div>Qtà</div>
+        <div></div>
+      </div>
+      <div id="rows"></div>
+      <div class="actions">
+        <button class="secondary" onclick="addRow()">+ Aggiungi riga</button>
+        <button class="primary" onclick="printAndSaveHistory()">🖨️ Stampa / Salva PDF</button>
+      </div>
+      <div class="summary" id="summary"></div>
+    </div>
+
+    <!-- CONFIGURAZIONI SALVATE -->
+    <div class="panel">
+      <h2>
+        Configurazioni salvate
+        <span class="toggle" onclick="saveCurrentConfig()">💾 Salva attuale</span>
+      </h2>
+      <div id="savedConfigsList" style="display:flex;flex-direction:column;gap:8px">
+        <div style="color:var(--muted);font-size:13px;font-style:italic">Nessuna configurazione salvata. Clicca "💾 Salva attuale" per memorizzare le righe correnti con un nome.</div>
+      </div>
+    </div>
+
+    <!-- STORICO STAMPE -->
+    <div class="panel">
+      <h2>🕘 Storico ultime stampe</h2>
+      <div id="printHistoryList" style="display:flex;flex-direction:column;gap:8px">
+        <div style="color:var(--muted);font-size:13px;font-style:italic">Nessuna stampa effettuata. Quando stamperai un foglio, verrà salvato automaticamente qui (max 5 più recenti).</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>
+        Personalizza stile
+        <span class="toggle" onclick="saveStyleAsDefault()" style="margin-right:8px">💾 Salva come mio default</span>
+        <span class="toggle" onclick="resetCurrentStyle()">↺ Ripristina default</span>
+      </h2>
+      <div class="style-category-tabs" id="styleCategoryTabs"></div>
+      <div class="style-tabs" id="styleTabs"></div>
+      <div class="style-editor" id="styleEditor"></div>
+    </div>
+
+    <div class="panel">
+      <h2>📦 Tipi di prodotto</h2>
+      <div class="types-list" id="typesList"></div>
+      <div class="actions">
+        <button class="secondary" onclick="addType()">+ Nuovo tipo</button>
+      </div>
+      <div class="summary">
+        Aggiungi qui nuovi prodotti (polline, propoli, cera...). I tipi vengono salvati nel browser.
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== COLONNA DESTRA: ANTEPRIMA ====== -->
+  <div>
+    <h2 style="font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--brown);margin:0 0 0.7rem;display:flex;align-items:center;gap:0.5rem">👁️ Anteprima foglio A4</h2>
+    <div class="preview-wrap" id="previewWrap">
+      <div class="a4" id="a4"></div>
+    </div>
+  </div>
+
+</div>
+</div><!-- fine appContent -->
+
+<script>
+// ===== DRIVE INTEGRATION =====
+let _driveSaveTimer = null;
+let _isAuthorized = false;
+
+function driveSaveDebounced() {
+  if(!_isAuthorized) return;
+  if(_driveSaveTimer) clearTimeout(_driveSaveTimer);
+  _driveSaveTimer = setTimeout(saveToDrive, 800);
+}
+
+async function saveToDrive() {
+  if(!_isAuthorized) return;
+  try {
+    await Storage.salvaFile('apiario_etichette.json', {
+      version: 3,
+      savedAt: new Date().toISOString(),
+      types, rows, styleConfig, savedConfigs, printHistory, currentFormat, userDefaults
+    });
+  } catch(e) {
+    console.error('[Etichette] Errore salvataggio:', e);
+    if(e.message === 'DRIVE_UNAUTHORIZED') {
+      _isAuthorized = false;
+      showLoginGate();
+    }
+  }
+}
+
+async function loadFromDrive() {
+  try {
+    const data = await Storage.leggiFile('apiario_etichette.json');
+    if(data) {
+      if(data.types) types = data.types;
+      if(data.rows) rows = data.rows;
+      if(data.styleConfig) styleConfig = data.styleConfig;
+      if(Array.isArray(data.savedConfigs)) savedConfigs = data.savedConfigs;
+      if(Array.isArray(data.printHistory)) printHistory = data.printHistory;
+      if(data.currentFormat) currentFormat = data.currentFormat;
+      if(data.userDefaults) userDefaults = data.userDefaults;
+      // Reinizializza eventuali stili mancanti (nuovi stili tondi)
+      for (const s of STYLES) {
+        if (!styleConfig[s.id]) styleConfig[s.id] = defaultStyleConfig()[s.id];
+      }
+    }
+  } catch(e) {
+    console.warn('[Etichette] Nessun salvataggio precedente o errore:', e.message);
+  }
+}
+
+function showLoginGate() {
+  document.getElementById('loginGate').style.display = 'flex';
+  document.getElementById('appContent').style.display = 'none';
+  document.getElementById('driveDot').classList.remove('connected');
+}
+
+function showAppContent() {
+  document.getElementById('loginGate').style.display = 'none';
+  document.getElementById('appContent').style.display = 'block';
+  document.getElementById('driveDot').classList.add('connected');
+  render();
+}
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    initDrive(
+      async () => {
+        document.getElementById('loginGateStatus').textContent = '🔄 Caricamento dati...';
+        await loadFromDrive();
+        _isAuthorized = true;
+        showAppContent();
+      },
+      () => {
+        document.getElementById('loginGate').style.display = 'flex';
+        document.getElementById('loginGateStatus').textContent = '🔄 Riprendo la sessione...';
+      },
+      () => {
+        document.getElementById('loginGate').style.display = 'flex';
+        document.getElementById('loginGateStatus').textContent = '👇 Tocca il pulsante per accedere';
+        _isAuthorized = false;
+      }
+    );
+  }, 500);
+});
+
+// ===== LOGICA ORIGINALE DEL GENERATORE =====
+  // ====== TIPI PRODOTTO DEFAULT ======
+  const DEFAULT_TYPES = [
+    { name: "acacia",     color: "#a67c00" },   // oro antico più scuro (più leggibile su tappo oro)
+    { name: "millefiori", color: "#8b5a2b" },   // marrone medio
+    { name: "castagno",   color: "#5c3010" },   // marrone scuro
+  ];
+
+  const DEFAULT_WEIGHTS = ["250 g", "500 g", "1000 g"];
+
+  const STYLES = [
+    // ===== MIELE =====
+    // Stili rettangolari miele
+    { id: "rustico",  name: "Rustico",  shape: "rect", category: "miele" },
+    { id: "minimal",  name: "Minimal",  shape: "rect", category: "miele" },
+    { id: "vintage",  name: "Vintage",  shape: "rect", category: "miele" },
+    { id: "classico", name: "Classico", shape: "rect", category: "miele" },
+    // Stili tondi miele
+    { id: "alveare",  name: "Alveare",  shape: "round", category: "miele" },
+    { id: "stemma",   name: "Stemma",   shape: "round", category: "miele" },
+    { id: "antico",   name: "Antico",   shape: "round", category: "miele" },
+    { id: "favo",     name: "Favo",     shape: "round", category: "miele" },
+    // ===== PROPOLI (3 stili dedicati, rettangolari) =====
+    { id: "prop_apothecary", name: "Apothecary",      shape: "rect", category: "propoli" },
+    { id: "prop_classica",   name: "Classica orn.",   shape: "rect", category: "propoli" },
+    { id: "prop_tag",        name: "Tag farmacia",    shape: "rect", category: "propoli" },
+    // ===== POLLINE (3 stili, varianti miele) =====
+    { id: "poll_tondo",      name: "Tondo polline",   shape: "round", category: "polline" },
+    { id: "poll_hexagon",    name: "Hexagon polline", shape: "rect",  category: "polline" },
+    { id: "poll_linea",      name: "Linea polline",   shape: "rect",  category: "polline" },
+  ];
+
+  // ====== FORMATI (dimensione foglio + etichetta + layout) ======
+  // shape: 'rect' o 'round' — determina quali stili sono disponibili
+  // page: 'portrait' o 'landscape' — orientamento A4
+  // pageW/pageH in mm
+  // labelW/labelH dimensioni etichetta in mm (per le tonde: labelW=labelH=diametro)
+  // cols/rows: griglia
+  // padX/padY: padding interno del foglio in mm
+  // marginX/marginY: margine tra etichette in mm
+  const FORMATS = [
+    {
+      id: "wide", name: "📐 Wide rettangolare (70×60mm, 12 per foglio)", shape: "rect",
+      page: "landscape", pageW: 297, pageH: 210,
+      labelW: 70, labelH: 60, cols: 4, rows: 3,
+      padX: 5, padY: 5.5, marginX: 1.5, marginY: 1.5
+    },
+    {
+      id: "vino", name: "📐 Vino rettangolare (95×45mm, 12 per foglio)", shape: "rect",
+      page: "landscape", pageW: 297, pageH: 210,
+      labelW: 95, labelH: 45, cols: 3, rows: 4,
+      padX: 3, padY: 12, marginX: 1.5, marginY: 1.5
+    },
+    {
+      id: "bandiera", name: "📐 Bandiera rettangolare (140×45mm, 8 per foglio)", shape: "rect",
+      page: "landscape", pageW: 297, pageH: 210,
+      labelW: 140, labelH: 45, cols: 2, rows: 4,
+      padX: 6, padY: 12, marginX: 2, marginY: 1.5
+    },
+    {
+      id: "tonda", name: "⭕ Tonda Ø58mm (12 per foglio) — per Miele/Polline", shape: "round",
+      page: "portrait", pageW: 210, pageH: 297,
+      labelW: 58, labelH: 58, cols: 3, rows: 4,
+      padX: 13, padY: 21, marginX: 1.5, marginY: 1.5
+    },
+    {
+      id: "propoli_vert", name: "🌿 Propoli verticale (30×70mm, 28 per foglio) — per bottigliette 30-50ml", shape: "rect",
+      page: "portrait", pageW: 210, pageH: 297,
+      labelW: 30, labelH: 70, cols: 5, rows: 4,
+      padX: 25, padY: 12, marginX: 5, marginY: 3
+    },
+    {
+      id: "propoli_quad", name: "🌿 Propoli quadrata (45×45mm, 20 per foglio) — per flaconi medi", shape: "rect",
+      page: "portrait", pageW: 210, pageH: 297,
+      labelW: 45, labelH: 45, cols: 4, rows: 5,
+      padX: 13, padY: 30, marginX: 4, marginY: 4
+    },
+    {
+      id: "polline_tonda", name: "🌾 Polline tonda Ø45mm (20 per foglio) — per vasetti polline", shape: "round",
+      page: "portrait", pageW: 210, pageH: 297,
+      labelW: 45, labelH: 45, cols: 4, rows: 5,
+      padX: 13, padY: 30, marginX: 4, marginY: 4
+    },
+  ];
+
+  function getFormat(id) {
+    return FORMATS.find(f => f.id === id) || FORMATS[0];
+  }
+
+  // Lista font disponibili
+  const FONTS = [
+    "Helvetica, Arial, sans-serif",
+    '"Times New Roman", Times, serif',
+    "Georgia, serif",
+    '"Courier New", monospace',
+    '"Brush Script MT", cursive',
+    '"Palatino Linotype", Palatino, serif',
+    "Verdana, sans-serif",
+    '"Trebuchet MS", sans-serif',
+    '"Cormorant Garamond", serif',
+    '"Playfair Display", serif',
+  ];
+  const FONT_LABELS = {
+    "Helvetica, Arial, sans-serif": "Helvetica / Arial",
+    '"Times New Roman", Times, serif': "Times",
+    "Georgia, serif": "Georgia",
+    '"Courier New", monospace': "Courier (monospaziato)",
+    '"Brush Script MT", cursive': "Brush Script (corsivo)",
+    '"Palatino Linotype", Palatino, serif': "Palatino",
+    "Verdana, sans-serif": "Verdana",
+    '"Trebuchet MS", sans-serif': "Trebuchet MS",
+    '"Cormorant Garamond", serif': "Cormorant Garamond",
+    '"Playfair Display", serif': "Playfair Display",
+  };
+
+  // ====== DEFAULT DEGLI STILI ======
+  // Ogni stile è una sequenza di "elementi". Ogni elemento ha proprietà
+  // editabili (testo, font, dimensione, visibilità, ecc.)
+  function defaultStyleConfig() {
+    return {
+      rustico: {
+        showOuterFrame: true,
+        showInnerFrame: true,
+        elements: [
+          { id: "bee",     kind: "decoration", deco: "bee",     visible: true, size: 10 },
+          { id: "kicker",  kind: "text", text: "Miele di",      visible: true, font: '"Times New Roman", Times, serif', size: 10, italic: true, bold: true, transform: "none", color: "type" },
+          { id: "name",    kind: "name", visible: true, font: '"Times New Roman", Times, serif', size: 15, italic: false, bold: true, transform: "none", color: "type" },
+          { id: "meta",    kind: "text", text: "~ produzione artigianale ~", visible: true, font: '"Times New Roman", Times, serif', size: 6, italic: true, bold: false, transform: "none", color: "ink" },
+          { id: "weight",  kind: "weight", visible: true, font: '"Times New Roman", Times, serif', size: 6, italic: true, bold: true, transform: "none", color: "ink", prefix: "PESO NETTO " },
+          { id: "brand",   kind: "text", text: "Apicoltura Girardi", visible: false, font: '"Times New Roman", Times, serif', size: 6, italic: true, bold: false, transform: "none", color: "ink" },
+        ],
+      },
+      minimal: {
+        showOuterFrame: false,
+        showInnerFrame: false,
+        elements: [
+          { id: "dot",     kind: "decoration", deco: "dot",     visible: true, size: 1.8 },
+          { id: "line1",   kind: "decoration", deco: "line",    visible: true, width: 38 },
+          { id: "kicker",  kind: "text", text: "MIELE DI",      visible: true, font: "Helvetica, Arial, sans-serif", size: 7, italic: false, bold: false, transform: "spaced", color: "ink" },
+          { id: "name",    kind: "name", visible: true, font: "Helvetica, Arial, sans-serif", size: 15, italic: false, bold: true, transform: "none", color: "ink" },
+          { id: "line2",   kind: "decoration", deco: "line",    visible: true, width: 38 },
+          { id: "weight",  kind: "weight", visible: true, font: "Helvetica, Arial, sans-serif", size: 6, italic: false, bold: false, transform: "none", color: "ink", prefix: "PESO NETTO " },
+          { id: "brand",   kind: "text", text: "Apicoltura Girardi", visible: false, font: "Helvetica, Arial, sans-serif", size: 6, italic: false, bold: false, transform: "spaced", color: "ink" },
+        ],
+      },
+      vintage: {
+        showOuterFrame: true,
+        showInnerFrame: true,
+        elements: [
+          { id: "kicker",   kind: "text", text: "~ Apicoltura ~", visible: true, font: '"Times New Roman", Times, serif', size: 8, italic: true, bold: false, transform: "none", color: "type" },
+          { id: "namerow",  kind: "name-with-diamonds", visible: true, font: '"Times New Roman", Times, serif', size: 15, italic: false, bold: true, transform: "none", color: "type", showDiamonds: true },
+          { id: "decoline", kind: "decoration", deco: "deco-line", visible: true, width: 30 },
+          { id: "flower",   kind: "decoration", deco: "flower",  visible: true, char: "✿", size: 8 },
+          { id: "weight",   kind: "weight", visible: true, font: '"Times New Roman", Times, serif', size: 6, italic: false, bold: false, transform: "none", color: "ink", prefix: "PESO NETTO " },
+          { id: "brand",    kind: "text", text: "Apicoltura Girardi", visible: false, font: '"Times New Roman", Times, serif', size: 6, italic: true, bold: false, transform: "none", color: "ink" },
+        ],
+      },
+      classico: {
+        showOuterFrame: false,
+        showInnerFrame: false,
+        elements: [
+          { id: "kicker",  kind: "text", text: "MIELE DI",      visible: true, font: '"Cormorant Garamond", serif', size: 7, italic: false, bold: 400, transform: "spaced", color: "ink" },
+          { id: "name",    kind: "name", visible: true, font: '"Playfair Display", serif', size: 18, italic: false, bold: true, transform: "none", color: "type" },
+          { id: "deco",    kind: "decoration", deco: "line",   visible: true, width: 28 },
+          { id: "peso",    kind: "weight", visible: true, font: '"Cormorant Garamond", serif', size: 6, italic: false, bold: false, transform: "spaced", color: "ink", prefix: "" },
+          { id: "brand",   kind: "text", text: "Apicoltura Girardi", visible: true, font: '"Playfair Display", serif', size: 7, italic: true, bold: false, transform: "none", color: "type" },
+        ],
+      },
+      // ====== STILI TONDI ======
+      // Gli stili tondi usano rendering SVG dedicato (testo curvo)
+      // Elementi: kicker (curvo in alto), name (centro), deco (linea), weight (centro), brand (sotto)
+      alveare: {
+        showOuterFrame: true,   // doppio cerchio decorativo
+        showInnerFrame: true,
+        shape: "round",
+        elements: [
+          { id: "kicker",  kind: "text-curved-top", text: "MIELE NATURALE", visible: true, font: '"Cinzel", serif', size: 8, bold: 600, letterSpacing: 5, color: "ink" },
+          { id: "name",    kind: "name", visible: true, font: '"Playfair Display", serif', size: 19, bold: 700, color: "type", stroke: 0.6 },
+          { id: "deco",    kind: "decoration-line", visible: true, width: 56, color: "amber" },
+          { id: "weight",  kind: "weight", visible: true, font: '"Cormorant Garamond", serif', size: 7.5, letterSpacing: 4, color: "ink", prefix: "" },
+          { id: "brand",   kind: "text", text: "◆ apicoltura girardi ◆", visible: true, font: '"Cormorant Garamond", serif', size: 7.5, italic: true, letterSpacing: 1.5, color: "ink" },
+        ],
+      },
+      stemma: {
+        showOuterFrame: true,
+        showInnerFrame: false,
+        shape: "round",
+        elements: [
+          { id: "starLeft",  kind: "decoration-star-left", visible: true, color: "amber" },
+          { id: "starRight", kind: "decoration-star-right", visible: true, color: "amber" },
+          { id: "brand",    kind: "text-curved-top", text: "APICOLTURA GIRARDI", visible: true, font: '"Playfair Display", serif', size: 8, bold: 600, letterSpacing: 3, color: "ink" },
+          { id: "kicker",  kind: "text", text: "— miele di —", visible: true, font: '"Cormorant Garamond", serif', size: 8, italic: true, color: "ink" },
+          { id: "name",    kind: "name", visible: true, font: '"Playfair Display", serif', size: 19, bold: 700, color: "type", stroke: 0.6 },
+          { id: "deco",    kind: "decoration-line", visible: true, width: 56, color: "amber" },
+          { id: "weight",  kind: "weight", visible: true, font: '"Cormorant Garamond", serif', size: 7.5, letterSpacing: 4, color: "ink", prefix: "" },
+        ],
+      },
+      antico: {
+        showOuterFrame: true,
+        showInnerFrame: true,
+        shape: "round",
+        elements: [
+          { id: "kicker",  kind: "text-curved-top-full", text: "❦ Miele di {name} ❦", visible: true, font: '"Cormorant Garamond", serif', size: 10, italic: true, bold: 700, letterSpacing: 2, color: "ink" },
+          { id: "bee",     kind: "decoration-emoji", char: "🐝", visible: true, size: 15 },
+          { id: "name",    kind: "name", visible: true, font: '"Playfair Display", serif', size: 16, italic: true, bold: 700, color: "type", stroke: 0.6 },
+          { id: "deco",    kind: "decoration-line", visible: true, width: 50, color: "amber" },
+          { id: "brand",   kind: "text", text: "~ Apicoltura Girardi · {weight} ~", visible: true, font: '"Cormorant Garamond", serif', size: 7.5, italic: true, letterSpacing: 1.5, color: "ink" },
+        ],
+      },
+      favo: {
+        showOuterFrame: false,
+        showInnerFrame: false,
+        shape: "round",
+        elements: [
+          { id: "hexLeft",  kind: "decoration-hex-left", visible: true, color: "amber" },
+          { id: "hexRight", kind: "decoration-hex-right", visible: true, color: "amber" },
+          { id: "kicker",  kind: "text-curved-top", text: "MIELE · DI · {name}", visible: true, font: '"Cormorant Garamond", serif', size: 8, bold: 600, letterSpacing: 4, color: "ink" },
+          { id: "name",    kind: "name", visible: true, font: '"Playfair Display", serif', size: 21, bold: 700, color: "type", stroke: 0.6 },
+          { id: "deco",    kind: "decoration-line", visible: true, width: 50, color: "amber" },
+          { id: "brand",   kind: "text", text: "Apicoltura Girardi", visible: true, font: '"Playfair Display", serif', size: 8, italic: true, color: "ink" },
+          { id: "weight",  kind: "weight", visible: true, font: '"Cormorant Garamond", serif', size: 7, letterSpacing: 3, color: "ink", prefix: "— ", suffix: " —" },
+        ],
+      },
+
+      // ====== PROPOLI ======
+
+      // Apothecary verticale - rettangolare alto/stretto (es. 30x80mm)
+      prop_apothecary: {
+        showOuterFrame: true,
+        showInnerFrame: true,
+        category: "propoli",
+        elements: [
+          { id: "kicker",   kind: "text",       text: "TINTURA DI",  visible: true,  font: 'Georgia, serif', size: 6, italic: false, bold: false, transform: "spaced", color: "type" },
+          { id: "name",     kind: "name",       visible: true, font: '"Playfair Display", serif', size: 14, italic: true, bold: true, transform: "none", color: "type" },
+          { id: "line",     kind: "decoration", deco: "line", visible: true, width: 18 },
+          { id: "conc",     kind: "text-conc",  visible: true, font: '"Playfair Display", serif', size: 22, italic: false, bold: true, transform: "none", color: "type" },
+          { id: "tipoprop", kind: "text-tipoprop", visible: true, font: 'Georgia, serif', size: 6, italic: false, bold: false, transform: "spaced", color: "ink" },
+          { id: "volume",   kind: "text-volume",   visible: true, font: 'Georgia, serif', size: 9, italic: false, bold: true, transform: "none", color: "type" },
+          { id: "datapr",   kind: "text-datapr",   visible: true, font: 'Georgia, serif', size: 6, italic: false, bold: false, transform: "none", color: "ink" },
+          { id: "brand",    kind: "text", text: "Apicoltura Girardi", visible: false, font: 'Georgia, serif', size: 6, italic: true, bold: false, transform: "none", color: "ink" },
+          { id: "warning",  kind: "text-warning", visible: true, font: 'Georgia, serif', size: 5, italic: true, bold: false, transform: "none", color: "ink" },
+        ],
+      },
+
+      // Classica con ornamento - rettangolare medio (es. 70x40mm)
+      prop_classica: {
+        showOuterFrame: true,
+        showInnerFrame: false,
+        category: "propoli",
+        elements: [
+          { id: "ornL",     kind: "decoration", deco: "flower", visible: true, char: "❦", size: 8 },
+          { id: "kicker",   kind: "text",       text: "APICOLTURA", visible: true,  font: 'Georgia, serif', size: 6, italic: false, bold: false, transform: "spaced", color: "type" },
+          { id: "name",     kind: "name",       visible: true, font: '"Playfair Display", serif', size: 14, italic: true, bold: true, transform: "none", color: "type" },
+          { id: "line",     kind: "decoration", deco: "deco-line", visible: true, width: 30 },
+          { id: "conc",     kind: "text-conc",  visible: true, font: 'Georgia, serif', size: 9, italic: false, bold: true, transform: "none", color: "type", prefix: "Concentrazione " },
+          { id: "tipoprop", kind: "text-tipoprop", visible: true, font: 'Georgia, serif', size: 7, italic: true, bold: false, transform: "none", color: "ink" },
+          { id: "volume",   kind: "text-volume",   visible: true, font: 'Georgia, serif', size: 8, italic: false, bold: true, transform: "none", color: "type" },
+          { id: "datapr",   kind: "text-datapr",   visible: true, font: 'Georgia, serif', size: 6, italic: false, bold: false, transform: "none", color: "ink", prefix: "Preparato il " },
+          { id: "brand",    kind: "text", text: "Apicoltura Girardi", visible: true, font: 'Georgia, serif', size: 7, italic: true, bold: false, transform: "none", color: "ink" },
+          { id: "warning",  kind: "text-warning", visible: true, font: 'Georgia, serif', size: 5, italic: true, bold: false, transform: "none", color: "ink" },
+        ],
+      },
+
+      // Tag farmacia vintage - quadrato/verticale (es. 40x60mm)
+      prop_tag: {
+        showOuterFrame: true,
+        showInnerFrame: false,
+        category: "propoli",
+        elements: [
+          { id: "icon",     kind: "decoration", deco: "flower", visible: true, char: "🌿", size: 12 },
+          { id: "kicker",   kind: "text",       text: "Tintura di", visible: true,  font: 'Georgia, serif', size: 6, italic: false, bold: false, transform: "spaced", color: "type" },
+          { id: "name",     kind: "name",       visible: true, font: '"Playfair Display", serif', size: 12, italic: true, bold: true, transform: "none", color: "type" },
+          { id: "conc",     kind: "text-conc",  visible: true, font: '"Playfair Display", serif', size: 18, italic: false, bold: true, transform: "none", color: "type" },
+          { id: "tipoprop", kind: "text-tipoprop", visible: true, font: 'Georgia, serif', size: 6, italic: true, bold: false, transform: "none", color: "ink" },
+          { id: "volume",   kind: "text-volume",   visible: true, font: 'Georgia, serif', size: 8, italic: false, bold: true, transform: "none", color: "type" },
+          { id: "datapr",   kind: "text-datapr",   visible: true, font: 'Georgia, serif', size: 6, italic: false, bold: false, transform: "none", color: "ink" },
+          { id: "warning",  kind: "text-warning", visible: true, font: 'Georgia, serif', size: 5, italic: true, bold: false, transform: "none", color: "ink" },
+        ],
+      },
+
+      // ====== POLLINE ======
+
+      // Tondo classico polline (round, simile a 'alveare' del miele)
+      poll_tondo: {
+        showOuterFrame: true,
+        showInnerFrame: true,
+        shape: "round",
+        category: "polline",
+        elements: [
+          { id: "kicker",   kind: "text-curved-top", text: "POLLINE D'API", visible: true, font: '"Cinzel", serif', size: 8, bold: 600, letterSpacing: 5, color: "ink" },
+          { id: "name",     kind: "name", visible: true, font: '"Playfair Display", serif', size: 17, bold: 700, color: "type", stroke: 0.6 },
+          { id: "deco",     kind: "decoration-line", visible: true, width: 50, color: "amber" },
+          { id: "stato",    kind: "text-stato", visible: true, font: '"Cormorant Garamond", serif', size: 7, letterSpacing: 3, color: "ink", transform: "spaced" },
+          { id: "weight",   kind: "weight", visible: true, font: '"Playfair Display", serif', size: 14, bold: 700, color: "type" },
+          { id: "origflor", kind: "text-origflor", visible: true, font: '"Cormorant Garamond", serif', size: 7, italic: true, color: "ink" },
+          { id: "brand",    kind: "text", text: "Apicoltura Girardi", visible: false, font: '"Cormorant Garamond", serif', size: 7, italic: true, letterSpacing: 1.5, color: "ink" },
+        ],
+      },
+
+      // Hexagon polline (rect, esagonale visuale)
+      poll_hexagon: {
+        showOuterFrame: true,
+        showInnerFrame: true,
+        category: "polline",
+        elements: [
+          { id: "icon",     kind: "decoration", deco: "flower", visible: true, char: "🌾", size: 12 },
+          { id: "kicker",   kind: "text", text: "POLLINE", visible: true, font: 'Georgia, serif', size: 7, bold: false, transform: "spaced", color: "type" },
+          { id: "name",     kind: "name", visible: true, font: '"Playfair Display", serif', size: 14, italic: true, bold: true, transform: "none", color: "type" },
+          { id: "stato",    kind: "text-stato", visible: true, font: 'Georgia, serif', size: 6, italic: false, transform: "spaced", color: "ink" },
+          { id: "weight",   kind: "weight", visible: true, font: '"Playfair Display", serif', size: 13, bold: true, color: "type" },
+          { id: "origflor", kind: "text-origflor", visible: true, font: 'Georgia, serif', size: 7, italic: true, color: "ink" },
+          { id: "brand",    kind: "text", text: "Apicoltura Girardi", visible: false, font: 'Georgia, serif', size: 6, italic: true, color: "ink" },
+        ],
+      },
+
+      // Linea moderna polline (rect, verticale, bande dorate)
+      poll_linea: {
+        showOuterFrame: false,
+        showInnerFrame: false,
+        category: "polline",
+        elements: [
+          { id: "bandTop",  kind: "decoration", deco: "deco-line", visible: true, width: 38 },
+          { id: "icon",     kind: "decoration", deco: "flower", visible: true, char: "🌾", size: 11 },
+          { id: "kicker",   kind: "text", text: "POLLINE D'API", visible: true, font: 'Georgia, serif', size: 6, bold: false, transform: "spaced", color: "type" },
+          { id: "name",     kind: "name", visible: true, font: '"Playfair Display", serif', size: 12, italic: true, bold: true, transform: "none", color: "type" },
+          { id: "line",     kind: "decoration", deco: "line", visible: true, width: 18 },
+          { id: "stato",    kind: "text-stato", visible: true, font: 'Georgia, serif', size: 6, italic: true, color: "ink" },
+          { id: "weight",   kind: "weight", visible: true, font: '"Playfair Display", serif', size: 15, bold: true, color: "type" },
+          { id: "origflor", kind: "text-origflor", visible: true, font: 'Georgia, serif', size: 6, italic: true, color: "ink" },
+          { id: "bandBot",  kind: "decoration", deco: "deco-line", visible: true, width: 38 },
+          { id: "brand",    kind: "text", text: "Apicoltura Girardi", visible: false, font: 'Georgia, serif', size: 5, italic: true, color: "ink" },
+        ],
+      },
+    };
+  }
+
+  // ====== STATO (caricato da Drive) ======
+  let types = [...DEFAULT_TYPES];
+  let rows  = [{ typeIdx: 1, style: "minimal", weight: "500 g", qty: 12 }];
+  let styleConfig = defaultStyleConfig();
+  let savedConfigs = [];  // configurazioni salvate manualmente con nome
+  let printHistory = [];  // storico automatico delle ultime 5 stampe
+  let currentFormat = "wide";  // formato A4 selezionato (Wide/Vino/Bandiera/Tonda)
+  let userDefaults = null;  // null = usa default di fabbrica. Altrimenti contiene styleConfig salvato dall'utente
+  let currentStyleTab = "rustico";
+  let currentCategory = "miele"; // 'miele' | 'propoli' | 'polline'
+
+  // Se mancano stili (es. dopo aggiornamento), reinizializzali
+  for (const s of STYLES) {
+    if (!styleConfig[s.id]) styleConfig[s.id] = defaultStyleConfig()[s.id];
+  }
+
+  // ====== PERSISTENZA (Drive) ======
+  function save() {
+    driveSaveDebounced();
+  }
+
+  // ====== FORMATO: gestione selettore e cambio ======
+  function renderFormatSelector() {
+    const sel = document.getElementById("formatSelector");
+    if (!sel) return;
+    sel.innerHTML = FORMATS.map(f =>
+      `<option value="${f.id}" ${f.id === currentFormat ? "selected" : ""}>${f.name}</option>`
+    ).join("");
+    updateFormatInfo();
+  }
+
+  function updateFormatInfo() {
+    const fmt = getFormat(currentFormat);
+    const total = fmt.cols * fmt.rows;
+    const info = document.getElementById("formatInfo");
+    if (info) {
+      info.innerHTML = `<strong>${total} etichette per foglio A4 ${fmt.page === "landscape" ? "orizzontale" : "verticale"}</strong> · ${fmt.labelW}${fmt.shape === "round" ? "mm Ø" : "×" + fmt.labelH + "mm"}`;
+    }
+  }
+
+  function changeFormat(newFormatId) {
+    const newFmt = getFormat(newFormatId);
+    const oldFmt = getFormat(currentFormat);
+
+    // Se cambia tra rect e round, devo aggiornare gli stili delle righe esistenti
+    if (newFmt.shape !== oldFmt.shape) {
+      const defaultStyle = newFmt.shape === "round" ? "alveare" : "rustico";
+      rows.forEach(r => {
+        const currentStyleDef = STYLES.find(s => s.id === r.style);
+        if (!currentStyleDef || currentStyleDef.shape !== newFmt.shape) {
+          r.style = defaultStyle;
+        }
+      });
+    }
+
+    currentFormat = newFormatId;
+    save();
+    render();
+  }
+
+  // Filtra gli stili disponibili in base al formato corrente
+  function getAvailableStyles() {
+    const fmt = getFormat(currentFormat);
+    return STYLES.filter(s => s.shape === fmt.shape);
+  }
+
+  function resetCurrentStyle() {
+    // Decidi cosa "default" significa: userDefaults se presente, altrimenti factory
+    const hasUserDefault = userDefaults && userDefaults[currentStyleTab];
+    const label = hasUserDefault ? "ai tuoi default salvati" : "ai default di fabbrica";
+    if (!confirm(`Ripristinare lo stile "${currentStyleTab}" ${label}?`)) return;
+    if (hasUserDefault) {
+      styleConfig[currentStyleTab] = JSON.parse(JSON.stringify(userDefaults[currentStyleTab]));
+    } else {
+      styleConfig[currentStyleTab] = defaultStyleConfig()[currentStyleTab];
+    }
+    save(); render();
+  }
+
+  // Salva il design attuale di TUTTI gli stili come default personale dell'utente
+  function saveStyleAsDefault() {
+    if (!confirm("Salvare il design attuale di tutti gli stili come tuoi default personali?\n\nDa qui in avanti, il pulsante \"↺ Ripristina default\" caricherà questi valori invece di quelli di fabbrica.")) return;
+    userDefaults = JSON.parse(JSON.stringify(styleConfig));
+    save();
+    alert("✓ Design salvato come tuo default personale.");
+  }
+
+  // Cancella i default personali (torna ai default di fabbrica)
+  function clearUserDefaults() {
+    if (!userDefaults) { alert("Non hai default personali salvati."); return; }
+    if (!confirm("Cancellare i tuoi default personali e tornare ai default di fabbrica?")) return;
+    userDefaults = null;
+    save();
+    alert("✓ Default personali cancellati. \"Ripristina default\" tornerà a usare i default di fabbrica.");
+  }
+
+  function renderRows() {
+    const container = document.getElementById("rows");
+    container.innerHTML = "";
+    rows.forEach((r, i) => {
+      const div = document.createElement("div");
+      div.className = "row";
+
+      const sel = document.createElement("select");
+      types.forEach((t, ti) => {
+        const opt = document.createElement("option");
+        opt.value = ti;
+        opt.textContent = t.name;
+        if (ti === r.typeIdx) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.onchange = e => { rows[i].typeIdx = parseInt(e.target.value); save(); render(); };
+
+      const styleSel = document.createElement("select");
+      const availableStyles = getAvailableStyles();
+      availableStyles.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.id;
+        // Aggiungi prefisso categoria per chiarezza
+        const cat = s.category || 'miele';
+        const catIcon = cat === 'propoli' ? '🌿 ' : (cat === 'polline' ? '🌾 ' : '🍯 ');
+        opt.textContent = catIcon + s.name;
+        if (s.id === r.style) opt.selected = true;
+        styleSel.appendChild(opt);
+      });
+      styleSel.onchange = e => {
+        rows[i].style = e.target.value;
+        // Inizializza campi extra in base alla categoria del nuovo stile
+        const newStyleDef = STYLES.find(s => s.id === rows[i].style);
+        if (newStyleDef?.category === 'propoli') {
+          if (!rows[i].concentrazione) rows[i].concentrazione = "20%";
+          if (!rows[i].volume) rows[i].volume = "30 ml";
+          if (!rows[i].tipoProp) rows[i].tipoProp = "Alcool 70°";
+          if (!rows[i].dataPrep) rows[i].dataPrep = new Date().toLocaleDateString('it-CH');
+          if (!rows[i].avvertenze) rows[i].avvertenze = "Contiene alcool. Non per bambini, gestanti e intolleranti.";
+        } else if (newStyleDef?.category === 'polline') {
+          if (!rows[i].statoPoll) rows[i].statoPoll = "Fresco da frigo";
+          if (!rows[i].origFlor) rows[i].origFlor = "Millefiori";
+          // Per il polline il peso può venire dal campo weight standard
+        }
+        save();
+        render();
+      };
+
+      const wInput = document.createElement("input");
+      wInput.type = "text";
+      wInput.value = r.weight;
+      wInput.setAttribute("list", "weights-list");
+      wInput.placeholder = "es. 500 g";
+      wInput.onchange = e => { rows[i].weight = e.target.value; save(); render(); };
+
+      const qInput = document.createElement("input");
+      qInput.type = "number";
+      qInput.min = "1";
+      qInput.value = r.qty;
+      qInput.onchange = e => {
+        rows[i].qty = Math.max(1, parseInt(e.target.value) || 1);
+        save(); render();
+      };
+
+      // Pulsante campi extra (solo se la categoria dello stile è propoli o polline)
+      const currentStyleDef = STYLES.find(s => s.id === r.style);
+      let extraBtn = null;
+      if (currentStyleDef && currentStyleDef.category && currentStyleDef.category !== 'miele') {
+        extraBtn = document.createElement("button");
+        extraBtn.type = "button";
+        extraBtn.textContent = "⚙️";
+        extraBtn.title = "Campi extra (concentrazione, volume, ecc.)";
+        extraBtn.style.cssText = "background:rgba(200,134,10,0.15);border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:14px";
+        extraBtn.onclick = () => openExtraFieldsModal(i);
+      }
+
+      const del = document.createElement("button");
+      del.className = "del";
+      del.textContent = "✕";
+      del.onclick = () => { rows.splice(i, 1); save(); render(); };
+
+      div.appendChild(sel);
+      div.appendChild(styleSel);
+      div.appendChild(wInput);
+      div.appendChild(qInput);
+      if (extraBtn) div.appendChild(extraBtn);
+      div.appendChild(del);
+      container.appendChild(div);
+    });
+
+    let dl = document.getElementById("weights-list");
+    if (!dl) {
+      dl = document.createElement("datalist");
+      dl.id = "weights-list";
+      document.body.appendChild(dl);
+    }
+    dl.innerHTML = DEFAULT_WEIGHTS.map(w => `<option value="${w}">`).join("");
+  }
+
+  // ====== MINI-MODALE CAMPI EXTRA (propoli/polline) ======
+  function openExtraFieldsModal(rowIdx) {
+    const r = rows[rowIdx];
+    const styleDef = STYLES.find(s => s.id === r.style);
+    if (!styleDef || styleDef.category === 'miele') return;
+
+    const isProp = styleDef.category === 'propoli';
+    const isPoll = styleDef.category === 'polline';
+
+    // Crea overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'extraFieldsOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.onclick = (e) => { if (e.target === overlay) closeExtraFieldsModal(); };
+
+    const modal = document.createElement('div');
+    modal.style.cssText = 'background:white;border-radius:8px;padding:1.5rem;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3)';
+
+    let html = `<h3 style="margin:0 0 1rem;color:var(--brown);font-family:Georgia,serif">⚙️ Campi ${isProp ? 'propoli' : 'polline'} — Riga ${rowIdx+1}</h3>`;
+
+    if (isProp) {
+      html += `
+        <div style="margin-bottom:0.8rem">
+          <label style="display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Tipo propoli</label>
+          <select id="extraTipoProp" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-family:inherit;font-size:14px">
+            <option value="Alcool 70°" ${r.tipoProp==='Alcool 70°'?'selected':''}>🍷 Alcolica (Alcool 70°)</option>
+            <option value="Glicerica 60:40" ${r.tipoProp==='Glicerica 60:40'?'selected':''}>💧 Analcolica (Glicerica 60:40)</option>
+            <option value="__custom__">📝 Personalizzato...</option>
+          </select>
+          <input type="text" id="extraTipoPropCustom" value="${(r.tipoProp && !['Alcool 70°','Glicerica 60:40'].includes(r.tipoProp)) ? r.tipoProp : ''}" placeholder="Es. Alcool 65°" style="display:${(r.tipoProp && !['Alcool 70°','Glicerica 60:40'].includes(r.tipoProp))?'block':'none'};margin-top:4px;width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-family:inherit;font-size:14px">
+        </div>
+
+        <div style="margin-bottom:0.8rem">
+          <label style="display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Concentrazione</label>
+          <input type="text" id="extraConc" value="${r.concentrazione||'20%'}" list="concList" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-family:inherit;font-size:14px">
+          <datalist id="concList">
+            <option value="10%"><option value="20%"><option value="30%">
+          </datalist>
+        </div>
+
+        <div style="margin-bottom:0.8rem">
+          <label style="display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Volume</label>
+          <input type="text" id="extraVolume" value="${r.volume||'30 ml'}" list="volumeList" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-family:inherit;font-size:14px">
+          <datalist id="volumeList">
+            <option value="10 ml"><option value="30 ml"><option value="50 ml"><option value="100 ml"><option value="200 ml"><option value="500 ml">
+          </datalist>
+        </div>
+
+        <div style="margin-bottom:0.8rem">
+          <label style="display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Data preparazione</label>
+          <input type="text" id="extraDataPr" value="${r.dataPrep||''}" placeholder="Es. 15.05.2026" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-family:inherit;font-size:14px">
+        </div>
+
+        <div style="margin-bottom:0.8rem">
+          <label style="display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">⚠️ Avvertenze (solo se alcolica)</label>
+          <textarea id="extraAvv" rows="2" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-family:inherit;font-size:13px;resize:vertical">${r.avvertenze||'Contiene alcool. Non per bambini, gestanti e intolleranti.'}</textarea>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;font-style:italic">Le avvertenze appaiono in etichetta solo se il tipo contiene "alcool"</div>
+        </div>
+      `;
+    } else if (isPoll) {
+      html += `
+        <div style="margin-bottom:0.8rem">
+          <label style="display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Stato</label>
+          <select id="extraStato" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-family:inherit;font-size:14px">
+            <option value="Fresco da frigo" ${r.statoPoll==='Fresco da frigo'?'selected':''}>❄️ Fresco da frigo</option>
+            <option value="Essiccato" ${r.statoPoll==='Essiccato'?'selected':''}>☀️ Essiccato</option>
+            <option value="Surgelato" ${r.statoPoll==='Surgelato'?'selected':''}>🧊 Surgelato</option>
+            <option value="__custom__">📝 Personalizzato...</option>
+          </select>
+          <input type="text" id="extraStatoCustom" value="${(r.statoPoll && !['Fresco da frigo','Essiccato','Surgelato'].includes(r.statoPoll)) ? r.statoPoll : ''}" placeholder="Es. Liofilizzato" style="display:${(r.statoPoll && !['Fresco da frigo','Essiccato','Surgelato'].includes(r.statoPoll))?'block':'none'};margin-top:4px;width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-family:inherit;font-size:14px">
+        </div>
+
+        <div style="margin-bottom:0.8rem">
+          <label style="display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Origine floreale</label>
+          <input type="text" id="extraOrigFlor" value="${r.origFlor||'Millefiori'}" list="origFlorList" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-family:inherit;font-size:14px">
+          <datalist id="origFlorList">
+            <option value="Millefiori">
+            <option value="Primavera">
+            <option value="Acacia">
+            <option value="Castagno">
+            <option value="Tarassaco">
+            <option value="Trifoglio">
+            <option value="Eucalipto">
+            <option value="Lavanda">
+          </datalist>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;font-style:italic">Puoi anche digitare un'origine personalizzata</div>
+        </div>
+
+        <div style="margin-bottom:0.8rem">
+          <label style="display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Conservazione (note)</label>
+          <input type="text" id="extraCons" value="${r.conservazione||''}" placeholder="Es. Conservare in frigo dopo apertura" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-family:inherit;font-size:14px">
+        </div>
+
+        <div style="background:rgba(200,134,10,0.08);padding:8px 12px;border-radius:4px;margin-bottom:0.8rem;font-size:12px;color:var(--muted)">
+          💡 Il <strong>peso</strong> (50g / 100g / ecc.) si imposta nella colonna principale della riga.
+        </div>
+      `;
+    }
+
+    html += `
+      <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem;border-top:1px solid #eee;padding-top:1rem">
+        <button type="button" onclick="closeExtraFieldsModal()" style="background:transparent;border:1px solid #ccc;padding:8px 16px;border-radius:4px;cursor:pointer;font-family:inherit">Annulla</button>
+        <button type="button" onclick="saveExtraFields(${rowIdx})" style="background:var(--accent);color:white;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:600">💾 Salva</button>
+      </div>
+    `;
+
+    modal.innerHTML = html;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Setup handlers per i select "personalizzato"
+    if (isProp) {
+      const sel = document.getElementById('extraTipoProp');
+      const custom = document.getElementById('extraTipoPropCustom');
+      sel.onchange = () => { custom.style.display = sel.value === '__custom__' ? 'block' : 'none'; };
+    }
+    if (isPoll) {
+      const sel = document.getElementById('extraStato');
+      const custom = document.getElementById('extraStatoCustom');
+      sel.onchange = () => { custom.style.display = sel.value === '__custom__' ? 'block' : 'none'; };
+    }
+  }
+
+  function closeExtraFieldsModal() {
+    const o = document.getElementById('extraFieldsOverlay');
+    if (o) o.remove();
+  }
+
+  function saveExtraFields(rowIdx) {
+    const r = rows[rowIdx];
+    const styleDef = STYLES.find(s => s.id === r.style);
+    if (!styleDef) return;
+
+    if (styleDef.category === 'propoli') {
+      const tipoSel = document.getElementById('extraTipoProp')?.value;
+      const tipoCustom = document.getElementById('extraTipoPropCustom')?.value.trim();
+      r.tipoProp = (tipoSel === '__custom__') ? tipoCustom : tipoSel;
+      r.concentrazione = document.getElementById('extraConc')?.value.trim() || '20%';
+      r.volume = document.getElementById('extraVolume')?.value.trim() || '30 ml';
+      r.dataPrep = document.getElementById('extraDataPr')?.value.trim() || '';
+      r.avvertenze = document.getElementById('extraAvv')?.value.trim() || '';
+    } else if (styleDef.category === 'polline') {
+      const statoSel = document.getElementById('extraStato')?.value;
+      const statoCustom = document.getElementById('extraStatoCustom')?.value.trim();
+      r.statoPoll = (statoSel === '__custom__') ? statoCustom : statoSel;
+      r.origFlor = document.getElementById('extraOrigFlor')?.value.trim() || 'Millefiori';
+      r.conservazione = document.getElementById('extraCons')?.value.trim() || '';
+    }
+
+    save();
+    closeExtraFieldsModal();
+    render();
+  }
+
+  function addRow() {
+    rows.push({ typeIdx: 0, style: "minimal", weight: "500 g", qty: 6 });
+    save(); render();
+  }
+
+  // ====== UI: TIPI PRODOTTO ======
+  function renderTypes() {
+    const c = document.getElementById("typesList");
+    c.innerHTML = "";
+    types.forEach((t, i) => {
+      const d = document.createElement("div");
+      d.className = "type-item";
+      const name = document.createElement("input");
+      name.type = "text";
+      name.value = t.name;
+      name.onchange = e => { types[i].name = e.target.value || "senza nome"; save(); render(); };
+      const color = document.createElement("input");
+      color.type = "color";
+      color.value = t.color;
+      color.onchange = e => { types[i].color = e.target.value; save(); render(); };
+      const del = document.createElement("button");
+      del.className = "del";
+      del.textContent = "✕";
+      del.onclick = () => {
+        if (types.length <= 1) { alert("Tieni almeno un tipo."); return; }
+        types.splice(i, 1);
+        rows.forEach(r => { if (r.typeIdx >= types.length) r.typeIdx = 0; });
+        save(); render();
+      };
+      d.appendChild(name);
+      d.appendChild(color);
+      d.appendChild(del);
+      c.appendChild(d);
+    });
+  }
+
+  function addType() {
+    types.push({ name: "nuovo prodotto", color: "#888888" });
+    save(); render();
+  }
+
+  // ====== UI: EDITOR STILE ======
+  function renderStyleEditor() {
+    const availableStyles = getAvailableStyles();
+
+    // 1. MACRO-TAB CATEGORIE
+    const catTabs = document.getElementById("styleCategoryTabs");
+    if (!catTabs) {
+      console.warn('[Etichette] styleCategoryTabs non trovato nel DOM');
+      return;
+    }
+    const categories = [
+      { id: 'miele',   label: '🍯 Miele' },
+      { id: 'propoli', label: '🌿 Propoli' },
+      { id: 'polline', label: '🌾 Polline' },
+    ];
+    // Conta gli stili disponibili per categoria
+    const stylesByCategory = {};
+    categories.forEach(c => {
+      stylesByCategory[c.id] = availableStyles.filter(s => (s.category || 'miele') === c.id);
+    });
+
+    // Se la categoria corrente non ha stili in questo formato, fallback alla prima con stili
+    if (stylesByCategory[currentCategory].length === 0) {
+      const fallback = categories.find(c => stylesByCategory[c.id].length > 0);
+      if (fallback) currentCategory = fallback.id;
+    }
+
+    catTabs.innerHTML = "";
+    categories.forEach(cat => {
+      const count = stylesByCategory[cat.id].length;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "style-cat-tab" + (cat.id === currentCategory ? " active" : "");
+      btn.innerHTML = `${cat.label} <span class="cat-count">${count}</span>`;
+      btn.disabled = count === 0;
+      if (count === 0) {
+        btn.style.opacity = '0.4';
+        btn.style.cursor = 'not-allowed';
+        btn.title = `Nessuno stile ${cat.label} disponibile per questo formato`;
+      } else {
+        btn.onclick = () => {
+          currentCategory = cat.id;
+          // Se il currentStyleTab non appartiene alla nuova categoria, switcha al primo della categoria
+          const stylesInNewCat = stylesByCategory[cat.id];
+          if (!stylesInNewCat.find(s => s.id === currentStyleTab)) {
+            currentStyleTab = stylesInNewCat[0].id;
+          }
+          renderStyleEditor();
+        };
+      }
+      catTabs.appendChild(btn);
+    });
+
+    // 2. TAB STILI (solo della categoria attiva)
+    const tabs = document.getElementById("styleTabs");
+    tabs.innerHTML = "";
+    const stylesInCategory = stylesByCategory[currentCategory];
+
+    // Se currentStyleTab non è nella categoria corrente, ripiega sul primo della categoria
+    if (!stylesInCategory.find(s => s.id === currentStyleTab)) {
+      currentStyleTab = stylesInCategory[0]?.id || "rustico";
+    }
+    // Aggiorna anche currentCategory per coerenza con il currentStyleTab
+    const currentStyleDef = STYLES.find(s => s.id === currentStyleTab);
+    if (currentStyleDef && (currentStyleDef.category || 'miele') !== currentCategory) {
+      currentCategory = currentStyleDef.category || 'miele';
+    }
+
+    stylesInCategory.forEach(s => {
+      const btn = document.createElement("button");
+      btn.className = "style-tab" + (s.id === currentStyleTab ? " active" : "");
+      const shapeIcon = s.shape === 'round' ? '⭕' : '▭';
+      btn.innerHTML = `<span class="shape-icon">${shapeIcon}</span>${s.name}`;
+      btn.onclick = () => { currentStyleTab = s.id; renderStyleEditor(); };
+      tabs.appendChild(btn);
+    });
+
+    // editor
+    let cfg = styleConfig[currentStyleTab];
+    if (!cfg) {
+      // Fallback: stile non presente nella config (es. nuovo stile dopo aggiornamento), reinizializza
+      console.warn('[Etichette] Stile mancante in styleConfig, reinizializzo:', currentStyleTab);
+      const factory = defaultStyleConfig();
+      if (factory[currentStyleTab]) {
+        styleConfig[currentStyleTab] = JSON.parse(JSON.stringify(factory[currentStyleTab]));
+        cfg = styleConfig[currentStyleTab];
+      } else {
+        // Fallback estremo: scegli il primo stile disponibile
+        currentStyleTab = stylesInCategory[0]?.id || 'rustico';
+        cfg = styleConfig[currentStyleTab];
+      }
+      if (!cfg) {
+        document.getElementById("styleEditor").innerHTML = '<p style="color:var(--red);font-style:italic">Errore: stile non disponibile</p>';
+        return;
+      }
+    }
+    const ed = document.getElementById("styleEditor");
+    ed.innerHTML = "";
+
+    // Indicatore se ci sono default personali salvati
+    if (userDefaults) {
+      const info = document.createElement("div");
+      info.style.cssText = "background:rgba(200,134,10,0.08);border-left:3px solid var(--accent);padding:8px 12px;border-radius:4px;margin-bottom:12px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px";
+      info.innerHTML = `
+        <span>✓ Hai default personali salvati. "Ripristina default" carica i tuoi valori.</span>
+        <button onclick="clearUserDefaults()" style="background:transparent;color:var(--red);border:1px solid var(--red);border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap">Cancella miei default</button>
+      `;
+      ed.appendChild(info);
+    }
+
+    // controlli generali (cornici)
+    const general = document.createElement("div");
+    general.className = "editor-element";
+    general.innerHTML = `
+      <div class="header"><span class="label-name">Cornici</span></div>
+      <div class="row-2col">
+        <label style="font-size:12px;"><input type="checkbox" ${cfg.showOuterFrame ? "checked" : ""} id="frameOuter"> Cornice esterna</label>
+        <label style="font-size:12px;"><input type="checkbox" ${cfg.showInnerFrame ? "checked" : ""} id="frameInner"> Cornice interna</label>
+      </div>
+    `;
+    ed.appendChild(general);
+    document.getElementById("frameOuter").onchange = e => { cfg.showOuterFrame = e.target.checked; save(); render(); };
+    document.getElementById("frameInner").onchange = e => { cfg.showInnerFrame = e.target.checked; save(); render(); };
+
+    // elementi
+    cfg.elements.forEach((el, idx) => {
+      const div = document.createElement("div");
+      div.className = "editor-element" + (el.visible ? "" : " disabled");
+
+      const labelMap = {
+        bee: "🐝 Ape (decorazione)",
+        kicker: "Scritta superiore",
+        name: "Nome prodotto",
+        namerow: "Nome prodotto + decorazioni laterali",
+        meta: "Scritta secondaria",
+        weight: "Peso",
+        dot: "Pallino (decorazione)",
+        line1: "Linea superiore",
+        line2: "Linea inferiore",
+        decoline: "Linea decorativa",
+        deco: "Linea decorativa",
+        flower: "✿ Fiore (decorazione)",
+        brand: "Brand / Apicoltore",
+        // Stili tondi
+        starLeft: "✦ Stella sinistra",
+        starRight: "✦ Stella destra",
+        hexLeft: "⬣ Esagoni sinistra",
+        hexRight: "⬣ Esagoni destra",
+      };
+      const elName = labelMap[el.id] || el.id;
+
+      let html = `
+        <div class="header">
+          <span class="label-name">${elName}</span>
+          <label class="visible-toggle">
+            <input type="checkbox" ${el.visible ? "checked" : ""} data-action="toggle-vis" data-idx="${idx}">
+            Visibile
+          </label>
+        </div>
+        <div class="controls">
+      `;
+
+      // testo modificabile (kicker, meta) — include nuovi kind tondi
+      if (el.kind === "text" || el.kind === "text-curved-top" || el.kind === "text-curved-top-full") {
+        html += `
+          <div>
+            <label class="field">Testo</label>
+            <input type="text" data-action="set-text" data-idx="${idx}" value="${escapeAttr(el.text)}">
+            ${el.kind === "text-curved-top" || el.kind === "text-curved-top-full" ? '<div style="font-size:11px;color:var(--muted);margin-top:4px">Puoi usare <code>{name}</code> e <code>{weight}</code> come segnaposto</div>' : ""}
+          </div>
+        `;
+      }
+
+      // weight: prefisso e suffisso modificabili
+      if (el.kind === "weight") {
+        html += `
+          <div class="row-2col">
+            <div>
+              <label class="field">Prefisso</label>
+              <input type="text" data-action="set-prefix" data-idx="${idx}" value="${escapeAttr(el.prefix || "")}">
+            </div>
+            <div>
+              <label class="field">Suffisso</label>
+              <input type="text" data-action="set-suffix" data-idx="${idx}" value="${escapeAttr(el.suffix || "")}">
+            </div>
+          </div>
+        `;
+      }
+
+      // controlli font/size per elementi testuali — include nuovi kind tondi
+      const isTextual = ["text", "name", "weight", "name-with-diamonds", "text-curved-top", "text-curved-top-full"].includes(el.kind);
+      if (isTextual) {
+        html += `
+          <div class="row-2col">
+            <div>
+              <label class="field">Font</label>
+              <select data-action="set-font" data-idx="${idx}">
+                ${FONTS.map(f => `<option value='${escapeAttr(f)}' ${f === el.font ? "selected" : ""}>${FONT_LABELS[f] || f}</option>`).join("")}
+              </select>
+            </div>
+            <div>
+              <label class="field">Dimensione (pt)</label>
+              <input type="number" step="0.5" min="3" max="40" data-action="set-size" data-idx="${idx}" value="${el.size}">
+            </div>
+          </div>
+          <div class="row-2col">
+            <div>
+              <label class="field">Stile</label>
+              <div style="display:flex;gap:8px;font-size:12px;">
+                <label><input type="checkbox" data-action="set-bold" data-idx="${idx}" ${el.bold ? "checked":""}> Grassetto</label>
+                <label><input type="checkbox" data-action="set-italic" data-idx="${idx}" ${el.italic ? "checked":""}> Corsivo</label>
+              </div>
+            </div>
+            ${el.kind !== "text-curved-top" && el.kind !== "text-curved-top-full" ? `<div>
+              <label class="field">Trasformazione</label>
+              <select data-action="set-transform" data-idx="${idx}">
+                <option value="none"      ${el.transform === "none" ? "selected" : ""}>Normale</option>
+                <option value="uppercase" ${el.transform === "uppercase" ? "selected" : ""}>MAIUSCOLO</option>
+                <option value="lowercase" ${el.transform === "lowercase" ? "selected" : ""}>minuscolo</option>
+                <option value="spaced"    ${el.transform === "spaced" ? "selected" : ""}>S P A Z I A T O</option>
+              </select>
+            </div>` : `<div>
+              <label class="field">Spaziatura caratteri</label>
+              <input type="number" step="0.5" min="0" max="15" data-action="set-letter-spacing" data-idx="${idx}" value="${el.letterSpacing || 0}">
+            </div>`}
+          </div>
+          <div class="row-2col">
+            <div>
+              <label class="field">Colore</label>
+              <select data-action="set-color" data-idx="${idx}">
+                <option value="type" ${el.color === "type" ? "selected" : ""}>Colore prodotto</option>
+                <option value="ink"  ${el.color === "ink"  ? "selected" : ""}>Nero</option>
+              </select>
+            </div>
+            <div>
+              <label class="field">Bordino nero (pt)</label>
+              <input type="number" step="0.1" min="0" max="2" data-action="set-stroke" data-idx="${idx}" value="${el.stroke || 0}" placeholder="0 = nessuno">
+            </div>
+          </div>
+        `;
+      }
+
+      // decorazioni linea (rettangolari)
+      if (el.kind === "decoration") {
+        if (el.deco === "dot" || el.deco === "flower" || el.deco === "bee") {
+          html += `
+            <div>
+              <label class="field">Dimensione (mm o pt)</label>
+              <input type="number" step="0.1" min="0.5" max="20" data-action="set-size" data-idx="${idx}" value="${el.size}">
+            </div>
+          `;
+        }
+        if (el.deco === "flower") {
+          html += `
+            <div>
+              <label class="field">Carattere</label>
+              <input type="text" maxlength="3" data-action="set-char" data-idx="${idx}" value="${escapeAttr(el.char || "")}">
+            </div>
+          `;
+        }
+        if (el.deco === "line" || el.deco === "deco-line") {
+          html += `
+            <div>
+              <label class="field">Larghezza (mm)</label>
+              <input type="number" step="1" min="5" max="48" data-action="set-width" data-idx="${idx}" value="${el.width}">
+            </div>
+          `;
+        }
+      }
+
+      // name-with-diamonds (vintage): toggle rombi
+      if (el.kind === "name-with-diamonds") {
+        html += `
+          <div>
+            <label style="font-size:12px;">
+              <input type="checkbox" data-action="set-diamonds" data-idx="${idx}" ${el.showDiamonds ? "checked" : ""}>
+              Mostra rombi laterali
+            </label>
+          </div>
+        `;
+      }
+
+      // ===== DECORAZIONI ETICHETTE TONDE =====
+      // decoration-line (linea decorativa centrale)
+      if (el.kind === "decoration-line") {
+        html += `
+          <div>
+            <label class="field">Larghezza linea (px)</label>
+            <input type="number" step="2" min="10" max="120" data-action="set-width" data-idx="${idx}" value="${el.width || 50}">
+          </div>
+          <div>
+            <label class="field">Colore linea</label>
+            <select data-action="set-color" data-idx="${idx}">
+              <option value="amber" ${el.color === "amber" ? "selected" : ""}>Ambra</option>
+              <option value="type" ${el.color === "type" ? "selected" : ""}>Colore prodotto</option>
+              <option value="ink"  ${el.color === "ink"  ? "selected" : ""}>Nero</option>
+            </select>
+          </div>
+        `;
+      }
+
+      // decoration-emoji (per l'apetta in stile Antico)
+      if (el.kind === "decoration-emoji") {
+        html += `
+          <div class="row-2col">
+            <div>
+              <label class="field">Emoji / Carattere</label>
+              <input type="text" maxlength="3" data-action="set-char" data-idx="${idx}" value="${escapeAttr(el.char || "🐝")}">
+            </div>
+            <div>
+              <label class="field">Dimensione (pt)</label>
+              <input type="number" step="1" min="8" max="40" data-action="set-size" data-idx="${idx}" value="${el.size || 20}">
+            </div>
+          </div>
+        `;
+      }
+
+      // stelle/esagoni laterali: solo colore
+      if (el.kind === "decoration-star-left" || el.kind === "decoration-star-right" ||
+          el.kind === "decoration-hex-left"  || el.kind === "decoration-hex-right") {
+        html += `
+          <div>
+            <label class="field">Colore</label>
+            <select data-action="set-color" data-idx="${idx}">
+              <option value="amber" ${el.color === "amber" ? "selected" : ""}>Ambra</option>
+              <option value="type" ${el.color === "type" ? "selected" : ""}>Colore prodotto</option>
+              <option value="ink"  ${el.color === "ink"  ? "selected" : ""}>Nero</option>
+            </select>
+          </div>
+        `;
+      }
+
+      html += `</div>`;
+      div.innerHTML = html;
+      ed.appendChild(div);
+    });
+
+    // bind handlers
+    ed.querySelectorAll("[data-action]").forEach(input => {
+      const action = input.dataset.action;
+      const idx = parseInt(input.dataset.idx);
+      const el = cfg.elements[idx];
+      const handler = e => {
+        const v = input.type === "checkbox" ? input.checked : input.value;
+        switch (action) {
+          case "toggle-vis":   el.visible = v; break;
+          case "set-text":     el.text = v; break;
+          case "set-prefix":   el.prefix = v; break;
+          case "set-suffix":   el.suffix = v; break;
+          case "set-font":     el.font = v; break;
+          case "set-size":     el.size = parseFloat(v); break;
+          case "set-bold":     el.bold = v; break;
+          case "set-italic":   el.italic = v; break;
+          case "set-transform":el.transform = v; break;
+          case "set-color":    el.color = v; break;
+          case "set-stroke":   el.stroke = parseFloat(v) || 0; break;
+          case "set-char":     el.char = v; break;
+          case "set-width":    el.width = parseFloat(v); break;
+          case "set-diamonds": el.showDiamonds = v; break;
+          case "set-letter-spacing": el.letterSpacing = parseFloat(v); break;
+        }
+        save();
+        // Solo aggiorna l'anteprima — non re-renderizzare l'editor (evita perdita del focus)
+        renderA4();
+      };
+      input.addEventListener("change", handler);
+      // Per input testuali e numerici, ascolta anche 'input' per feedback realtime
+      if (input.tagName === "INPUT" && (input.type === "text" || input.type === "number")) {
+        input.addEventListener("input", handler);
+      }
+    });
+  }
+
+  // ====== COSTRUZIONE ETICHETTA ======
+  function buildLabel(l) {
+    let cfg = styleConfig[l.style];
+    if (!cfg) {
+      // Stile non in config: reinizializza dal factory
+      const factory = defaultStyleConfig();
+      if (factory[l.style]) {
+        styleConfig[l.style] = JSON.parse(JSON.stringify(factory[l.style]));
+        cfg = styleConfig[l.style];
+      } else {
+        // Fallback finale: usa rustico
+        cfg = styleConfig['rustico'] || factory['rustico'];
+      }
+    }
+    // Determina shape dalla definizione in STYLES se non c'è nel cfg
+    const styleDef = STYLES.find(s => s.id === l.style);
+    const shape = cfg.shape || styleDef?.shape || 'rect';
+    const isRound = shape === "round";
+
+    if (isRound) {
+      return buildRoundLabel(l, cfg);
+    }
+    return buildRectLabel(l, cfg);
+  }
+
+  function buildRectLabel(l, cfg) {
+    const div = document.createElement("div");
+    div.className = "label style-" + l.style;
+    div.style.color = l.color;
+
+    // crocini
+    const crops = `
+      <div class="crop h tl-h"></div><div class="crop h tr-h"></div>
+      <div class="crop h bl-h"></div><div class="crop h br-h"></div>
+      <div class="crop v tl-v"></div><div class="crop v tr-v"></div>
+      <div class="crop v bl-v"></div><div class="crop v br-v"></div>
+    `;
+
+    // cornici
+    let frames = "";
+    if (cfg.showOuterFrame) frames += `<div class="frame-outer"></div>`;
+    if (cfg.showInnerFrame) frames += `<div class="frame-inner"></div>`;
+
+    // elementi
+    let body = "";
+    cfg.elements.forEach(el => {
+      if (!el.visible) return;
+      body += renderElement(el, l);
+    });
+
+    div.innerHTML = crops + frames + body;
+    return div;
+  }
+
+  // ====== ETICHETTE TONDE (rendering SVG) ======
+  function buildRoundLabel(l, cfg) {
+    const div = document.createElement("div");
+    div.className = "label round style-" + l.style;
+    div.style.color = l.color;
+
+    const typeColor = l.color;
+    const inkColor = "#2a2a2a";
+    const amberColor = "rgba(200,134,10,0.6)";
+    const amberLight = "rgba(200,134,10,0.45)";
+
+    // Helper per risolvere il colore
+    const resolveColor = (c) => {
+      if (c === "type") return typeColor;
+      if (c === "amber") return amberColor;
+      return inkColor;
+    };
+
+    // Helper per template ({name}, {weight})
+    const t = l._typeName || "Acacia";
+    const w = l.weight || "500 g";
+    const tmpl = (s) => (s || "").replace(/\{name\}/g, t).replace(/\{weight\}/g, w);
+
+    // Inizio SVG (viewBox 240x240, perché ragioniamo in scala "anteprima")
+    let svg = `<svg class="round-svg" viewBox="0 0 240 240" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`;
+
+    // Cornici (cerchi decorativi)
+    if (cfg.showOuterFrame) {
+      svg += `<circle cx="120" cy="120" r="108" fill="none" stroke="rgba(140,90,30,0.4)" stroke-width="0.8"/>`;
+    }
+    if (cfg.showInnerFrame) {
+      svg += `<circle cx="120" cy="120" r="103" fill="none" stroke="rgba(140,90,30,0.25)" stroke-width="0.4"/>`;
+    }
+
+    // Path definitions per testo curvo (definiti una volta)
+    svg += `<defs>
+      <path id="curve-top-${l.style}-${l._idx}" d="M 35,108 A 95,95 0 0,1 205,108" fill="none"/>
+    </defs>`;
+
+    // Elementi
+    cfg.elements.forEach(el => {
+      if (!el.visible) return;
+      svg += renderRoundElement(el, l, resolveColor, tmpl);
+    });
+
+    // Esagono guida (sigillo) in basso
+    svg += `<polygon points="120,162 153,180 153,216 120,234 87,216 87,180"
+                     fill="none" stroke="rgba(200,134,10,0.45)" stroke-width="0.8" stroke-dasharray="3 2"/>`;
+
+    // PUNTINO CENTRALE (per ritagliare a centro etichetta) — sempre in primo piano
+    svg += `<circle cx="120" cy="120" r="0.5" fill="rgba(80,50,20,0.7)"/>`;
+
+    svg += `</svg>`;
+    div.innerHTML = svg;
+    return div;
+  }
+
+  function renderRoundElement(el, l, resolveColor, tmpl) {
+    const color = resolveColor(el.color);
+    const fontFam = el.font || '"Cormorant Garamond", serif';
+    const fontWeight = el.bold ? (typeof el.bold === "number" ? el.bold : "bold") : "normal";
+    const fontStyle = el.italic ? "italic" : "normal";
+    const ls = el.letterSpacing ? `letter-spacing:${el.letterSpacing}px;` : "";
+    // Conversione pt → user units SVG (viewBox 240 su etichetta 58mm)
+    // 58mm = 219px reali, viewBox 240. Quindi 1 user-unit ≈ 0.91px reali ≈ 0.683pt
+    // → 1pt ≈ 1.46 user units. Approssimato a 1.5 per visibilità migliore.
+    const sizeInUserUnits = (el.size || 10) * 1.5;
+    // IMPORTANTE: il font-family contiene virgolette doppie (es. '"Times New Roman"')
+    // che chiuderebbero prematuramente l'attributo style="...". Le sostituisco con apici singoli.
+    const fontFamSafe = fontFam.replace(/"/g, "'");
+    // Bordino nero (stroke) opzionale per migliorare contrasto su tappi colorati
+    const strokeStyle = el.stroke && el.stroke > 0
+      ? `stroke:#000;stroke-width:${el.stroke};paint-order:stroke;`
+      : "";
+    const styleAttr = `fill:${color};font-family:${fontFamSafe};font-size:${sizeInUserUnits}px;font-weight:${fontWeight};font-style:${fontStyle};${ls}${strokeStyle}`;
+
+    const text = tmpl(el.text || "");
+
+    switch (el.kind) {
+      case "text-curved-top": {
+        const pathId = `curve-top-${l.style}-${l._idx}`;
+        return `<text style="${styleAttr}"><textPath href="#${pathId}" startOffset="50%" text-anchor="middle">${escapeHtml(text)}</textPath></text>`;
+      }
+      case "text-curved-top-full": {
+        const pathId = `curve-top-${l.style}-${l._idx}`;
+        return `<text style="${styleAttr}"><textPath href="#${pathId}" startOffset="50%" text-anchor="middle">${escapeHtml(text)}</textPath></text>`;
+      }
+      case "text": {
+        // Posizione Y in base allo stile (mappata sui template che abbiamo definito)
+        const y = roundElementY(el, l.style);
+        return `<text x="120" y="${y}" text-anchor="middle" style="${styleAttr}">${escapeHtml(text)}</text>`;
+      }
+      case "name": {
+        const y = roundElementY(el, l.style);
+        return `<text x="120" y="${y}" text-anchor="middle" style="${styleAttr}">${escapeHtml(l._typeName || "Acacia")}</text>`;
+      }
+      case "weight": {
+        const y = roundElementY(el, l.style);
+        const prefix = el.prefix || "";
+        const suffix = el.suffix || "";
+        return `<text x="120" y="${y}" text-anchor="middle" style="${styleAttr}">${escapeHtml(prefix + (l.weight || "") + suffix)}</text>`;
+      }
+      case "decoration-line": {
+        const halfW = (el.width || 50) / 2;
+        const y = roundElementY(el, l.style);
+        const strokeColor = el.color === "amber" ? "rgba(200,134,10,0.6)" : "rgba(140,90,30,0.5)";
+        return `<line x1="${120 - halfW}" y1="${y}" x2="${120 + halfW}" y2="${y}" stroke="${strokeColor}" stroke-width="0.6"/>`;
+      }
+      case "decoration-emoji": {
+        const y = roundElementY(el, l.style);
+        return `<text x="120" y="${y}" text-anchor="middle" style="font-size:${el.size || 20}px">${el.char || "🐝"}</text>`;
+      }
+      case "decoration-star-left":
+        return `<text x="35" y="105" text-anchor="middle" style="font-size:14px;fill:${resolveColor(el.color)}">✦</text>`;
+      case "decoration-star-right":
+        return `<text x="205" y="105" text-anchor="middle" style="font-size:14px;fill:${resolveColor(el.color)}">✦</text>`;
+      case "decoration-hex-left":
+        return `<g fill="none" stroke="${resolveColor(el.color)}" stroke-width="0.6">
+          <polygon points="28,100 34,96 40,100 40,110 34,114 28,110"/>
+          <polygon points="20,118 26,114 32,118 32,128 26,132 20,128"/>
+          <polygon points="28,136 34,132 40,136 40,146 34,150 28,146"/>
+        </g>`;
+      case "decoration-hex-right":
+        return `<g fill="none" stroke="${resolveColor(el.color)}" stroke-width="0.6">
+          <polygon points="200,100 206,96 212,100 212,110 206,114 200,110"/>
+          <polygon points="208,118 214,114 220,118 220,128 214,132 208,128"/>
+          <polygon points="200,136 206,132 212,136 212,146 206,150 200,146"/>
+        </g>`;
+    }
+    return "";
+  }
+
+  // Posizioni Y predefinite per ogni elemento di ogni stile tondo
+  function roundElementY(el, styleId) {
+    const positions = {
+      alveare: { name: 100, deco: 115, weight: 132, brand: 150 },
+      stemma: { kicker: 95, name: 122, deco: 135, weight: 152 },
+      antico: { bee: 100, name: 130, deco: 142, brand: 158 },
+      favo: { name: 105, deco: 120, brand: 138, weight: 155 },
+    };
+    const styleMap = positions[styleId] || {};
+    return styleMap[el.id] || 130;
+  }
+
+  function renderElement(el, l) {
+    const colorVal = el.color === "ink" ? "#2a2a2a" : l.color;
+
+    // costruisci stile testo comune
+    const textStyle = el.font ? `
+      font-family: ${el.font};
+      font-size: ${el.size}pt;
+      font-weight: ${el.bold ? "bold" : "normal"};
+      font-style: ${el.italic ? "italic" : "normal"};
+      color: ${colorVal};
+    ` : "";
+
+    if (el.kind === "text") {
+      const txt = transformText(el.text, el.transform);
+      return `<div class="el" style="${textStyle}">${escapeHtml(txt)}</div>`;
+    }
+
+    if (el.kind === "name") {
+      const txt = transformText(l.name, el.transform);
+      return `<div class="el" style="${textStyle}">${escapeHtml(txt)}</div>`;
+    }
+
+    if (el.kind === "name-with-diamonds") {
+      const txt = transformText(l.name, el.transform);
+      const diamonds = el.showDiamonds
+        ? `<div class="diamonds"><div class="diamond"></div><div class="diamond"></div></div>`
+        : "";
+      return `
+        <div class="el name-row" style="${textStyle}">
+          ${diamonds}
+          <span>${escapeHtml(txt)}</span>
+          ${diamonds}
+        </div>
+      `;
+    }
+
+    if (el.kind === "weight") {
+      const txt = transformText((el.prefix || "") + l.weight + (el.suffix || ""), el.transform);
+      return `<div class="el" style="${textStyle}; margin-top: 1mm;">${escapeHtml(txt)}</div>`;
+    }
+
+    // ====== NUOVI KIND PROPOLI/POLLINE ======
+    if (el.kind === "text-conc") {
+      // Concentrazione propoli (es. "20%")
+      const val = l.concentrazione || "20%";
+      const txt = transformText((el.prefix || "") + val + (el.suffix || ""), el.transform);
+      return `<div class="el" style="${textStyle}">${escapeHtml(txt)}</div>`;
+    }
+
+    if (el.kind === "text-volume") {
+      // Volume propoli (es. "30 ml")
+      const val = l.volume || "30 ml";
+      const txt = transformText((el.prefix || "") + val + (el.suffix || ""), el.transform);
+      return `<div class="el" style="${textStyle}">${escapeHtml(txt)}</div>`;
+    }
+
+    if (el.kind === "text-tipoprop") {
+      // Tipo propoli (es. "Alcool 70°" oppure "Glicerica 60:40")
+      const val = l.tipoProp || "Alcool 70°";
+      const txt = transformText((el.prefix || "") + val + (el.suffix || ""), el.transform);
+      return `<div class="el" style="${textStyle}">${escapeHtml(txt)}</div>`;
+    }
+
+    if (el.kind === "text-datapr") {
+      // Data preparazione (es. "15.05.2026")
+      const val = l.dataPrep || "";
+      if (!val) return "";
+      const txt = transformText((el.prefix || "") + val + (el.suffix || ""), el.transform);
+      return `<div class="el" style="${textStyle}">${escapeHtml(txt)}</div>`;
+    }
+
+    if (el.kind === "text-warning") {
+      // Avvertenza propoli (solo alcolica)
+      // Mostra solo se tipoProp contiene "alcool" o "alcolica"
+      const tipo = (l.tipoProp || "").toLowerCase();
+      const isAlcolica = tipo.includes("alcool") || tipo.includes("alcolic");
+      if (!isAlcolica) return "";
+      const val = l.avvertenze || "Contiene alcool. Non per bambini, gestanti e intolleranti.";
+      const txt = transformText((el.prefix || "") + val + (el.suffix || ""), el.transform);
+      return `<div class="el" style="${textStyle};margin-top:1.5mm;line-height:1.2;text-align:center">${escapeHtml(txt)}</div>`;
+    }
+
+    if (el.kind === "text-stato") {
+      // Stato polline (es. "Fresco da frigo")
+      const val = l.statoPoll || "Fresco";
+      const txt = transformText((el.prefix || "") + val + (el.suffix || ""), el.transform);
+      return `<div class="el" style="${textStyle}">${escapeHtml(txt)}</div>`;
+    }
+
+    if (el.kind === "text-origflor") {
+      // Origine floreale polline (es. "Millefiori - Primavera")
+      const val = l.origFlor || "Millefiori";
+      const txt = transformText((el.prefix || "") + val + (el.suffix || ""), el.transform);
+      return `<div class="el" style="${textStyle}">${escapeHtml(txt)}</div>`;
+    }
+
+    if (el.kind === "decoration") {
+      if (el.deco === "bee") {
+        return `<div class="el" style="font-size:${el.size}pt;line-height:1;">🐝</div>`;
+      }
+      if (el.deco === "flower") {
+        return `<div class="el" style="font-size:${el.size}pt;line-height:1;color:${colorVal};">${escapeHtml(el.char || "✿")}</div>`;
+      }
+      if (el.deco === "dot") {
+        return `<div class="dot" style="width:${el.size}mm;height:${el.size}mm;background:${l.color};"></div>`;
+      }
+      if (el.deco === "line") {
+        return `<div class="line" style="width:${el.width}mm;"></div>`;
+      }
+      if (el.deco === "deco-line") {
+        return `<div class="deco-line" style="width:${el.width}mm;background:${l.color};"></div>`;
+      }
+    }
+
+    return "";
+  }
+
+  function transformText(s, transform) {
+    if (transform === "uppercase") return s.toUpperCase();
+    if (transform === "lowercase") return s.toLowerCase();
+    if (transform === "spaced") {
+      return s.toUpperCase().split("").join(" ").replace(/\s\s\s/g, "   ");
+    }
+    return s;
+  }
+
+  // ====== CONFIGURAZIONI SALVATE ======
+  function saveCurrentConfig() {
+    if (rows.length === 0) { alert("Aggiungi almeno una riga prima di salvare"); return; }
+    const nome = prompt("Nome della configurazione (es. 'Stagione 2026 acacia 500g'):");
+    if (!nome || !nome.trim()) return;
+    savedConfigs.unshift({
+      id: Date.now().toString(),
+      nome: nome.trim(),
+      savedAt: new Date().toISOString(),
+      rows: JSON.parse(JSON.stringify(rows))  // deep clone
+    });
+    save();
+    renderSavedConfigs();
+  }
+
+  function loadConfig(id) {
+    const cfg = savedConfigs.find(c => c.id === id);
+    if (!cfg) return;
+    if (!confirm(`Caricare "${cfg.nome}"? Le righe attuali verranno sostituite.`)) return;
+    rows = JSON.parse(JSON.stringify(cfg.rows));
+    save();
+    render();
+  }
+
+  function deleteConfig(id) {
+    const cfg = savedConfigs.find(c => c.id === id);
+    if (!cfg) return;
+    if (!confirm(`Eliminare la configurazione "${cfg.nome}"?`)) return;
+    savedConfigs = savedConfigs.filter(c => c.id !== id);
+    save();
+    renderSavedConfigs();
+  }
+
+  function renderSavedConfigs() {
+    const container = document.getElementById('savedConfigsList');
+    if (!container) return;
+    if (savedConfigs.length === 0) {
+      container.innerHTML = '<div style="color:var(--muted);font-size:13px;font-style:italic">Nessuna configurazione salvata. Clicca "💾 Salva attuale" per memorizzare le righe correnti con un nome.</div>';
+      return;
+    }
+    container.innerHTML = savedConfigs.map(c => {
+      const totEt = c.rows.reduce((s, r) => s + (parseInt(r.qty, 10) || 0), 0);
+      const dataLabel = new Date(c.savedAt).toLocaleDateString('it-IT');
+      return `<div style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;color:var(--ink);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(c.nome)}</div>
+          <div style="font-size:11px;color:var(--muted)">${dataLabel} · ${c.rows.length} righe · ${totEt} etichette</div>
+        </div>
+        <button onclick="loadConfig('${c.id}')" style="background:var(--accent);color:white;border:0;border-radius:4px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit">Carica</button>
+        <button onclick="deleteConfig('${c.id}')" style="background:transparent;color:var(--red);border:1px solid var(--red);border-radius:4px;padding:5px 8px;font-size:12px;cursor:pointer;font-family:inherit">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  // ====== STORICO STAMPE ======
+  function printAndSaveHistory() {
+    // Salva snapshot delle righe attuali prima di stampare
+    if (rows.length > 0) {
+      printHistory.unshift({
+        id: Date.now().toString(),
+        printedAt: new Date().toISOString(),
+        rows: JSON.parse(JSON.stringify(rows))
+      });
+      // Mantieni solo le ultime 5 stampe
+      if (printHistory.length > 5) printHistory = printHistory.slice(0, 5);
+      save();
+      renderPrintHistory();
+    }
+    // Imposta orientamento A4 in base al formato corrente
+    const fmt = getFormat(currentFormat);
+    setPrintPageSize(fmt.page);
+
+    // Rimuovi temporaneamente il transform di scaling (usato solo in anteprima)
+    const pages = document.querySelectorAll(".a4");
+    const savedTransforms = [];
+    pages.forEach(p => {
+      savedTransforms.push({ transform: p.style.transform, marginBottom: p.style.marginBottom });
+      p.style.transform = "";
+      p.style.marginBottom = "";
+    });
+
+    // Stampa
+    window.print();
+
+    // Ripristina il scaling per l'anteprima
+    setTimeout(() => {
+      pages.forEach((p, i) => {
+        p.style.transform = savedTransforms[i].transform;
+        p.style.marginBottom = savedTransforms[i].marginBottom;
+      });
+    }, 100);
+  }
+
+  // Inserisce/aggiorna una <style> con @page size dinamica
+  function setPrintPageSize(orientation) {
+    let styleEl = document.getElementById("dynamicPrintPage");
+    if (!styleEl) {
+      styleEl = document.createElement("style");
+      styleEl.id = "dynamicPrintPage";
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = `@page { size: A4 ${orientation}; margin: 0; }`;
+  }
+
+  function loadFromHistory(id) {
+    const h = printHistory.find(p => p.id === id);
+    if (!h) return;
+    if (!confirm(`Ricaricare la stampa del ${new Date(h.printedAt).toLocaleDateString('it-IT')}? Le righe attuali verranno sostituite.`)) return;
+    rows = JSON.parse(JSON.stringify(h.rows));
+    save();
+    render();
+  }
+
+  function renderPrintHistory() {
+    const container = document.getElementById('printHistoryList');
+    if (!container) return;
+    if (printHistory.length === 0) {
+      container.innerHTML = '<div style="color:var(--muted);font-size:13px;font-style:italic">Nessuna stampa effettuata. Quando stamperai un foglio, verrà salvato automaticamente qui (max 5 più recenti).</div>';
+      return;
+    }
+    container.innerHTML = printHistory.map(h => {
+      const totEt = h.rows.reduce((s, r) => s + (parseInt(r.qty, 10) || 0), 0);
+      const d = new Date(h.printedAt);
+      const dataLabel = d.toLocaleDateString('it-IT') + ' ' + d.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+      // Crea un piccolo riassunto dei tipi stampati
+      const tipiSummary = h.rows.map(r => {
+        const t = types[r.typeIdx];
+        return t ? t.name : '?';
+      }).slice(0, 3).join(', ') + (h.rows.length > 3 ? '...' : '');
+      return `<div style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;color:var(--ink);font-size:13px">🖨️ ${dataLabel}</div>
+          <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${totEt} etichette · ${escapeHtml(tipiSummary)}</div>
+        </div>
+        <button onclick="loadFromHistory('${h.id}')" style="background:var(--accent);color:white;border:0;border-radius:4px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit">Ricarica</button>
+      </div>`;
+    }).join('');
+  }
+
+  // ====== ANTEPRIMA A4 ======
+  function renderA4() {
+    const wrap = document.getElementById("previewWrap");
+    wrap.innerHTML = "";
+
+    const fmt = getFormat(currentFormat);
+    const labels = [];
+    rows.forEach((r, idx) => {
+      const t = types[r.typeIdx];
+      if (!t) return;
+      // Sicurezza: ripiega su stile compatibile col formato
+      const styleDef = STYLES.find(s => s.id === r.style);
+      const styleId = (styleDef && styleDef.shape === fmt.shape)
+        ? r.style
+        : (fmt.shape === "round" ? "alveare" : "rustico");
+      for (let k = 0; k < r.qty; k++) {
+        labels.push({
+          name: t.name,
+          _typeName: t.name,
+          color: t.color,
+          weight: r.weight,
+          style: styleId,
+          _idx: idx + "-" + k
+        });
+      }
+    });
+
+    // Aggiorna info formato (per riflettere eventuale autocorrezione)
+    updateFormatInfo();
+
+    if (labels.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "a4 a4-" + fmt.id;
+      applyA4Style(empty, fmt);
+      empty.innerHTML = '<div class="empty-msg">Aggiungi una riga per iniziare.</div>';
+      wrap.appendChild(empty);
+      document.getElementById("summary").textContent = "";
+      return;
+    }
+
+    const PER_PAGE = fmt.cols * fmt.rows;
+    const totalPages = Math.ceil(labels.length / PER_PAGE);
+
+    for (let p = 0; p < totalPages; p++) {
+      const page = document.createElement("div");
+      page.className = "a4 a4-" + fmt.id;
+      applyA4Style(page, fmt);
+      if (p > 0) page.style.marginTop = "10mm";
+      const slice = labels.slice(p * PER_PAGE, (p + 1) * PER_PAGE);
+      slice.forEach(l => {
+        const lbl = buildLabel(l);
+        applyLabelStyle(lbl, fmt);
+        page.appendChild(lbl);
+      });
+      wrap.appendChild(page);
+    }
+
+    document.getElementById("summary").textContent =
+      `Totale: ${labels.length} etichette · ${totalPages} foglio${totalPages>1?'i':''} A4 ${fmt.page === "landscape" ? "orizzontale" : "verticale"} · ${PER_PAGE} etichette per foglio`;
+  }
+
+  // Applica dimensioni dinamiche al foglio A4 in base al formato
+  function applyA4Style(pageEl, fmt) {
+    pageEl.style.width = fmt.pageW + "mm";
+    pageEl.style.height = fmt.pageH + "mm";
+    pageEl.style.minHeight = fmt.pageH + "mm";
+    pageEl.style.padding = fmt.padY + "mm " + fmt.padX + "mm";
+    // Ricalcolo robusto dopo che il layout è stabile (rAF invece di setTimeout)
+    requestAnimationFrame(() => fitA4ToContainer(pageEl, fmt));
+  }
+
+  function fitA4ToContainer(pageEl, fmt) {
+    const wrap = document.getElementById("previewWrap");
+    if (!wrap || !pageEl) return;
+    const MM = 3.7795; // mm → px
+    const availW = wrap.clientWidth - 40;   // padding 20+20
+    if (availW <= 0) {
+      // Contenitore non ancora dimensionato (es. tab nascosta): riprova al frame dopo
+      requestAnimationFrame(() => fitA4ToContainer(pageEl, fmt));
+      return;
+    }
+    const naturalW = fmt.pageW * MM;
+    const naturalH = fmt.pageH * MM;
+    // Vincolo larghezza
+    const scaleW = availW / naturalW;
+    // Vincolo altezza: usa l'altezza visibile della viewport del preview (se disponibile),
+    // così un A4 verticale non costringe a scroll infiniti su schermi bassi
+    let scale = scaleW;
+    const availH = (window.innerHeight || 800) - wrap.getBoundingClientRect().top - 40;
+    if (availH > 120) {
+      const scaleH = availH / naturalH;
+      scale = Math.min(scaleW, scaleH);
+    }
+    // Non ingrandire mai oltre la dimensione naturale
+    scale = Math.min(1, scale);
+    pageEl.style.transformOrigin = "top center";
+    pageEl.style.transform = scale < 1 ? `scale(${scale})` : "";
+    // Compensa lo spazio lasciato dallo scale (altrimenti resta un vuoto sotto)
+    pageEl.style.marginBottom = scale < 1 ? `${naturalH * (scale - 1)}px` : "";
+  }
+
+  // Ricalcola l'adattamento di tutti i fogli al resize della finestra (con debounce)
+  let _fitResizeTimer = null;
+  function _refitAllPages() {
+    let fmt = null;
+    try { fmt = getFormat(currentFormat); } catch(e) { return; }
+    if (!fmt) return;
+    document.querySelectorAll("#previewWrap .a4").forEach(p => fitA4ToContainer(p, fmt));
+  }
+  window.addEventListener("resize", () => {
+    clearTimeout(_fitResizeTimer);
+    _fitResizeTimer = setTimeout(_refitAllPages, 150);
+  });
+
+  // Applica dimensioni dinamiche alle etichette in base al formato
+  function applyLabelStyle(labelEl, fmt) {
+    labelEl.style.width = fmt.labelW + "mm";
+    labelEl.style.height = fmt.labelH + "mm";
+    labelEl.style.margin = fmt.marginY + "mm " + fmt.marginX + "mm";
+    if (fmt.shape === "round") {
+      labelEl.style.borderRadius = "50%";
+    } else {
+      labelEl.style.borderRadius = "";
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+    }[c]));
+  }
+  function escapeAttr(s) { return escapeHtml(s); }
+
+  function render() {
+    renderFormatSelector();
+    renderRows();
+    renderTypes();
+    renderStyleEditor();
+    renderA4();
+    renderSavedConfigs();
+    renderPrintHistory();
+  }
+
+  // Ridimensiona automaticamente i fogli A4 quando cambia la finestra
+  window.addEventListener("resize", () => {
+    const fmt = getFormat(currentFormat);
+    document.querySelectorAll(".a4").forEach(p => fitA4ToContainer(p, fmt));
+  });
+
+
+</script>
+</body>
+</html>

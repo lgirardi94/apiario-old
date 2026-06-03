@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<!-- FILE VERSION: 2026-05-28.8 · visita_rapida.html -->
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Apiario — Visita rapida</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐝</text></svg>">
+<link rel="manifest" href="visita.manifest.json">
+<meta name="theme-color" content="#4A7C3F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Visita rapida">
+<link rel="apple-touch-icon" href="icons/visita_192.png">
+<link rel="stylesheet" href="style-mobile.css?v=20260554">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="shared.js?v=20260567"></script>
+<script src="js/storage.js?v=20260567"></script>
+<style>
+  /* WIZARD */
+  .wizard-header {
+    background: linear-gradient(135deg, var(--dark-mid), var(--dark));
+    padding: 1rem 1.1rem 0.9rem;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    color: var(--amber-glow);
+  }
+  /* Riga titolo header (coordinata con le altre app) */
+  .wizard-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.9rem;
+  }
+  .wizard-title-row h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--amber-glow);
+  }
+  /* Step numerati con etichette */
+  .wizard-progress {
+    display: flex;
+    align-items: flex-start;
+  }
+  .wiz-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+  }
+  .wiz-step .circ {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: rgba(245,200,66,0.2);
+    color: rgba(245,200,66,0.7);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700;
+    z-index: 2; border: 2px solid transparent;
+    transition: all 0.3s;
+  }
+  .wiz-step .sl {
+    font-size: 0.58rem;
+    margin-top: 0.25rem;
+    color: rgba(245,200,66,0.6);
+    transition: color 0.3s;
+  }
+  .wiz-step::before {
+    content: '';
+    position: absolute;
+    top: 13px; left: -50%;
+    width: 100%; height: 2px;
+    background: rgba(245,200,66,0.2);
+    z-index: 1;
+    transition: background 0.3s;
+  }
+  .wiz-step:first-child::before { display: none; }
+  .wiz-step.done .circ { background: var(--amber); color: white; }
+  .wiz-step.active .circ { background: var(--amber-glow); color: var(--dark); border-color: white; }
+  .wiz-step.active .sl { color: var(--amber-glow); font-weight: 700; }
+  .wiz-step.done::before, .wiz-step.active::before { background: var(--amber); }
+
+  .wizard-drive-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #888;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+  .wizard-drive-dot.connected { background: #4CAF50; }
+
+  .wizard-body {
+    padding: 1.2rem;
+    max-width: 480px;
+    margin: 0 auto;
+    padding-bottom: 6rem;
+  }
+
+  /* STEP TITLE */
+  .step-title {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+  }
+  .step-sub {
+    font-size: 0.88rem;
+    color: var(--text-light);
+    margin-bottom: 1.2rem;
+  }
+
+  /* ARNIA CARDS */
+  .arnia-grid-w {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .arnia-card-w {
+    background: white;
+    border: 2px solid var(--cream-dark);
+    border-radius: 10px;
+    padding: 0.9rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .arnia-card-w.selected {
+    border-color: var(--amber);
+    background: var(--amber-pale);
+    box-shadow: 0 2px 12px rgba(200,134,10,0.25);
+    position: relative;
+  }
+  .arnia-card-w.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    width: 22px;
+    height: 22px;
+    background: var(--amber);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  .arnia-card-w:active { transform: scale(0.98); }
+  .arnia-card-num {
+    font-family: 'Georgia', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--amber);
+    min-width: 36px;
+  }
+  .arnia-card-w.selected .arnia-card-num { color: var(--brown); }
+  .arnia-card-info { flex: 1; }
+  .arnia-card-nome { font-size: 1rem; font-weight: 600; color: var(--text); }
+  .arnia-card-meta { font-size: 0.78rem; color: var(--text-light); margin-top: 2px; }
+  .arnia-card-stato {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .stato-attiva   { background: #e8f5e9; color: var(--green); }
+  .stato-debole   { background: #fff3e0; color: #e65100; }
+  .stato-problema { background: #fce8e8; color: var(--red); }
+  .stato-invernata{ background: #e3f2fd; color: var(--blue); }
+  .arnia-last-isp {
+    font-size: 0.72rem;
+    color: var(--text-light);
+    font-style: italic;
+    margin-top: 3px;
+  }
+
+  /* CHIP TIPO */
+  .tipo-chips-w {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+  .tipo-chip-w {
+    background: white;
+    border: 2px solid var(--cream-dark);
+    border-radius: 10px;
+    padding: 0.85rem 0.7rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .tipo-chip-w:active { transform: scale(0.97); }
+  .tipo-chip-w.selected {
+    border-color: var(--amber);
+    background: var(--amber-pale);
+    position: relative;
+  }
+  .tipo-chip-w.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    width: 16px;
+    height: 16px;
+    background: var(--amber);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+  }
+  .tipo-chip-w .chip-icon { font-size: 1.5rem; display: block; margin-bottom: 0.25rem; }
+  .tipo-chip-w .chip-label { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+  .tipo-chip-w.selected .chip-label { color: var(--brown); }
+
+  /* ISPEZIONE GRID */
+  .isp-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.7rem;
+    margin-bottom: 0.8rem;
+  }
+  .isp-field { display: flex; flex-direction: column; gap: 0.3rem; }
+  .isp-field label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-light);
+  }
+  .isp-select {
+    width: 100%;
+    padding: 0.75rem 0.8rem;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: white;
+    color: var(--text);
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    font-family: -apple-system, sans-serif;
+  }
+  .isp-select:focus { outline: none; border-color: var(--amber); }
+
+  /* MAPPA TELAINI */
+  .telaini-num-row {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 0.8rem;
+    flex-wrap: wrap;
+  }
+  .tel-num-btn {
+    width: 40px; height: 40px;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 8px;
+    background: white;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-light);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tel-num-btn.selected {
+    background: var(--amber);
+    border-color: var(--amber);
+    color: white;
+  }
+  .telaini-map-w {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  .tel-item-w {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .tel-label-w {
+    font-size: 0.72rem;
+    color: var(--text-light);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .tel-item-w select {
+    width: 100%;
+    padding: 0.65rem 0.6rem;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    background: white;
+    color: var(--text);
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    font-family: -apple-system, sans-serif;
+  }
+  .tel-item-w select:focus { outline: none; border-color: var(--amber); }
+
+  /* RACCOLTA */
+  .raccolta-row-w {
+    background: #e8f5e9;
+    border: 1px solid #9FC9B0;
+    border-radius: 8px;
+    padding: 0.8rem;
+    margin-bottom: 0.6rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .raccolta-row-w select, .raccolta-row-w input {
+    padding: 0.55rem 0.7rem;
+    border: 1px solid #9FC9B0;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background: white;
+    color: var(--text);
+    font-family: -apple-system, sans-serif;
+  }
+  .raccolta-row-w select { flex: 2; }
+  .raccolta-row-w input  { flex: 1; min-width: 70px; }
+  .raccolta-unita-w      { font-size: 0.82rem; color: var(--green); font-weight: 600; min-width: 24px; }
+
+  /* RIEPILOGO */
+  .riepilogo-card {
+    background: var(--amber-pale);
+    border: 1px solid var(--amber-light);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    margin-bottom: 1.2rem;
+  }
+  .riepilogo-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.35rem 0;
+    border-bottom: 1px dotted var(--cream-dark);
+    font-size: 0.9rem;
+    gap: 0.5rem;
+  }
+  .riepilogo-row:last-child { border-bottom: none; }
+  .riepilogo-label { color: var(--text-light); flex-shrink: 0; }
+  .riepilogo-val   { color: var(--text); font-weight: 600; text-align: right; }
+
+  /* NAV BOTTOM */
+  .wizard-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: white;
+    border-top: 1px solid var(--cream-dark);
+    padding: 0.8rem 1.2rem;
+    display: flex;
+    gap: 0.8rem;
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+  }
+  .btn-prev {
+    padding: 0.85rem 1.2rem;
+    background: white;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-light);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-next {
+    flex: 1;
+    padding: 0.85rem;
+    background: var(--amber);
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--dark);
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(200,134,10,0.3);
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.15s;
+  }
+  .btn-next:active { transform: scale(0.98); }
+  .btn-next:disabled { opacity: 0.4; }
+  .btn-next.green {
+    background: var(--green);
+    box-shadow: 0 4px 15px rgba(74,124,63,0.3);
+    color: white;
+  }
+
+  /* SUCCESS */
+  .wizard-success {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+    gap: 0.8rem;
+    padding: 2rem;
+  }
+  .wizard-success.show { display: flex; }
+  .success-bee { font-size: 4rem; animation: pop 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
+  @keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
+
+  /* FORM ELEMENTS GENERICI */
+  .w-form-group { margin-bottom: 1rem; }
+  .w-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-light);
+    margin-bottom: 0.4rem;
+  }
+  .w-input, .w-textarea {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--text);
+    background: white;
+    -webkit-appearance: none;
+    font-family: -apple-system, sans-serif;
+  }
+  .w-input:focus, .w-textarea:focus {
+    outline: none;
+    border-color: var(--amber);
+  }
+  .w-textarea { resize: none; height: 90px; }
+
+  .section-divider {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-light);
+    margin: 1.2rem 0 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--cream-dark);
+  }
+
+  /* NOTA CHIPS (suggerimenti rapidi) */
+  .nota-chip {
+    padding: 0.35rem 0.7rem;
+    background: white;
+    border: 1px solid var(--cream-dark);
+    border-radius: 16px;
+    font-size: 0.78rem;
+    color: var(--text-light);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nota-chip:active {
+    background: var(--amber-pale);
+    border-color: var(--amber);
+    color: var(--brown);
+    transform: scale(0.97);
+  }
+
+  .toast-w {
+    position: fixed;
+    bottom: 5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--dark);
+    color: var(--amber-glow);
+    padding: 0.7rem 1.3rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+    border: 1px solid var(--amber);
+    pointer-events: none;
+  }
+  .toast-w.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- HEADER WIZARD -->
+<div class="wizard-header">
+  <div class="wizard-title-row">
+    <span style="font-size:1.2rem">🔍</span>
+    <h1>Visita rapida</h1>
+    <div class="wizard-drive-dot" id="wizDriveDot"></div>
+  </div>
+  <div class="wizard-progress">
+    <div class="wiz-step active" id="prog-1"><div class="circ">1</div><div class="sl">Arnia</div></div>
+    <div class="wiz-step" id="prog-2"><div class="circ">2</div><div class="sl">Tipo</div></div>
+    <div class="wiz-step" id="prog-3"><div class="circ">3</div><div class="sl">Dettagli</div></div>
+    <div class="wiz-step" id="prog-4"><div class="circ">4</div><div class="sl">Riepilogo</div></div>
+  </div>
+</div>
+
+<!-- BANNER ARNIA SELEZIONATA (visibile da step 2 in poi) -->
+<div id="wizArniaBanner" style="display:none;background:var(--amber-pale);border-bottom:1px solid var(--amber);padding:0.6rem 1.2rem;font-size:0.88rem;color:var(--brown);position:sticky;top:0;z-index:40">
+  <span style="font-weight:600">🐝 <span id="wizArniaBannerText">—</span></span>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div id="wizLoginScreen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;padding:2rem;text-align:center;gap:1.5rem">
+  <div style="font-size:3.5rem">🐝</div>
+  <h2 style="color:var(--brown);font-size:1.3rem">Connetti Google Drive</h2>
+  <p style="color:var(--text-light);font-size:0.95rem;line-height:1.5">Accedi per sincronizzare le visite con l'apiario principale.</p>
+  <button class="btn-google" onclick="driveLogin()">
+    <svg width="18" height="18" viewBox="0 0 48 48">
+      <path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+      <path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+      <path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+    </svg>
+    Accedi con Google
+  </button>
+</div>
+
+<!-- WIZARD CONTENT -->
+<div id="wizContent" style="display:none">
+  <div class="wizard-body">
+
+    <!-- STEP 1: ARNIA -->
+    <div id="step1">
+      <div class="step-title">Quale arnia?</div>
+      <div class="step-sub">Tocca per selezionare</div>
+      <div class="arnia-grid-w" id="wizArnieGrid"></div>
+    </div>
+
+    <!-- STEP 2: DATA + TIPO -->
+    <div id="step2" style="display:none">
+      <div class="step-title">Quando e cosa?</div>
+      <div class="step-sub">Seleziona data e tipo di intervento</div>
+
+      <div class="w-form-group">
+        <label class="w-label">Data visita</label>
+        <input type="date" id="wizData" class="w-input">
+      </div>
+
+      <div class="section-divider">Tipo di intervento</div>
+      <div class="tipo-chips-w">
+        <div class="tipo-chip-w" data-tipo="ispezione" onclick="toggleTipo(this)">
+          <span class="chip-icon">🔍</span><span class="chip-label">Ispezione</span>
+        </div>
+        <div class="tipo-chip-w" data-tipo="trattamento" onclick="toggleTipo(this)">
+          <span class="chip-icon">💊</span><span class="chip-label">Trattamento</span>
+        </div>
+        <div class="tipo-chip-w" data-tipo="nutrizione" onclick="toggleTipo(this)">
+          <span class="chip-icon">🍬</span><span class="chip-label">Nutrizione</span>
+        </div>
+        <div class="tipo-chip-w" data-tipo="produzione" onclick="toggleTipo(this)">
+          <span class="chip-icon">🍯</span><span class="chip-label">Raccolta</span>
+        </div>
+        <div class="tipo-chip-w" data-tipo="salute" onclick="toggleTipo(this)">
+          <span class="chip-icon">⚕️</span><span class="chip-label">Salute</span>
+        </div>
+        <div class="tipo-chip-w" data-tipo="altro" onclick="toggleTipo(this)">
+          <span class="chip-icon">📌</span><span class="chip-label">Altro</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: DETTAGLI -->
+    <div id="step3" style="display:none">
+      <div class="step-title">Dettagli</div>
+      <div class="step-sub">Compila i dati rilevati</div>
+
+      <!-- ISPEZIONE -->
+      <div id="wizIspSection" style="display:none">
+        <div class="section-divider">🔍 Ispezione</div>
+
+        <!-- Covata + Scorte affiancati -->
+        <div class="isp-grid-2">
+          <div class="isp-field">
+            <label>🟤 Covata</label>
+            <select id="wizCovata" class="isp-select">
+              <option value="">— Non rilevata —</option>
+              <option value="1">1 — Scarsa</option>
+              <option value="2">2 — Rada</option>
+              <option value="3">3 — Discreta</option>
+              <option value="4">4 — Buona</option>
+              <option value="5">5 — Ottima</option>
+            </select>
+          </div>
+          <div class="isp-field">
+            <label>🟡 Scorte</label>
+            <select id="wizScorte" class="isp-select">
+              <option value="">— Non rilevate —</option>
+              <option value="1">1 — Scarse</option>
+              <option value="2">2 — Limitate</option>
+              <option value="3">3 — Sufficienti</option>
+              <option value="4">4 — Buone</option>
+              <option value="5">5 — Abbondanti</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Celle reali -->
+        <div class="isp-field" style="margin-bottom:0.8rem">
+          <label>👑 Celle reali</label>
+          <select id="wizCelleReali" class="isp-select">
+            <option value="">— Non rilevate —</option>
+            <option value="0">0 — Nessuna</option>
+            <option value="1">1 — 1-2</option>
+            <option value="2">2 — 3-5</option>
+            <option value="3">3 — 6-10</option>
+            <option value="4">4 — 11-20</option>
+            <option value="5">5 — Oltre 20</option>
+          </select>
+        </div>
+
+        <div class="section-divider" style="margin-top:1.2rem">📏 Sviluppo famiglia</div>
+        <div class="isp-field" style="margin-bottom:0.8rem">
+          <label>Telaini occupati</label>
+          <div class="telaini-num-row" id="wizTelainiNumRow"></div>
+        </div>
+        <div class="telaini-map-w" id="wizTelainiMap"></div>
+      </div>
+
+      <!-- RACCOLTA -->
+      <div id="wizRaccoltaSection" style="display:none">
+        <div class="section-divider">🍯 Raccolta</div>
+        <div id="wizRaccoltaRighe"></div>
+        <button type="button" onclick="addWizRaccoltaRiga()" class="btn-secondary" style="width:100%;padding:0.6rem;border:1.5px dashed var(--green);border-radius:8px;background:transparent;color:var(--green);font-size:0.9rem;font-weight:600;cursor:pointer;margin-top:0.3rem">+ Aggiungi prodotto</button>
+      </div>
+
+      <!-- TRATTAMENTO -->
+      <div id="wizTrattamentoSection" style="display:none">
+        <div class="section-divider">💊 Trattamento</div>
+        <div class="isp-grid-2">
+          <div class="isp-field">
+            <label>Prodotto</label>
+            <select id="wizTrattProdotto" class="isp-select">
+              <option value="">— Seleziona —</option>
+              <option value="varromed">🌿 VarroMed</option>
+              <option value="apibioxal">❄️ Api-Bioxal</option>
+              <option value="altro">📌 Altro</option>
+            </select>
+          </div>
+          <div class="isp-field">
+            <label>Dosaggio</label>
+            <input type="text" id="wizTrattDosaggio" class="isp-select" placeholder="Es. 50 ml" style="-webkit-appearance:none;appearance:none">
+          </div>
+        </div>
+      </div>
+
+      <!-- SE NESSUN DETTAGLIO SPECIFICO -->
+      <div id="wizNoDetail" style="display:none;color:var(--text-light);font-style:italic;font-size:0.9rem;text-align:center;padding:1.5rem">
+        Nessun dettaglio specifico per questo tipo di intervento.<br>Vai al passo successivo per aggiungere note.
+      </div>
+
+      <!-- ACCESSORI PRODUTTIVI (sempre visibile) -->
+      <div id="wizAccessoriSection" style="background:var(--cream);padding:0.9rem 1rem;border-radius:8px;margin-top:1rem">
+        <div style="font-weight:700;color:var(--brown);margin-bottom:0.6rem;font-size:0.95rem">🍯 Accessori produttivi</div>
+        <div id="wizAccessoriContent"></div>
+      </div>
+
+      <!-- NOTE (spostate qui dallo step 4, per-arnia) -->
+      <div class="w-form-group" style="margin-top:1rem">
+        <label class="w-label">Note / Osservazioni <span style="font-weight:400;font-size:0.7rem;color:var(--text-light);text-transform:none;letter-spacing:0">(opzionale)</span></label>
+        <textarea id="wizNote" class="w-textarea" placeholder="Es. Regina vista, covata compatta, aggiunto melario..."></textarea>
+        <div id="wizNoteSuggerimenti" style="margin-top:0.5rem;display:flex;flex-wrap:wrap;gap:0.35rem">
+          <button type="button" onclick="aggiungiNotaSuggerita('Regina vista')" class="nota-chip">👑 Regina vista</button>
+          <button type="button" onclick="aggiungiNotaSuggerita('Covata compatta')" class="nota-chip">🟤 Covata compatta</button>
+          <button type="button" onclick="aggiungiNotaSuggerita('Famiglia debole')" class="nota-chip">⚠️ Famiglia debole</button>
+          <button type="button" onclick="aggiungiNotaSuggerita('Sciamatura')" class="nota-chip">🐝 Sciamatura</button>
+          <button type="button" onclick="aggiungiNotaSuggerita('Trattamento eseguito')" class="nota-chip">💊 Trattamento eseguito</button>
+          <button type="button" onclick="aggiungiNotaSuggerita('Aggiunto melario')" class="nota-chip">📦 Aggiunto melario</button>
+        </div>
+      </div>
+
+      <div class="w-form-group">
+        <label class="w-label">Varroa (cadute/giorno) — opzionale</label>
+        <input type="number" id="wizVarroa" class="w-input" min="0" placeholder="—" inputmode="decimal">
+      </div>
+    </div>
+
+    <!-- STEP 4: RIEPILOGO MULTI-ARNIA -->
+    <div id="step4" style="display:none">
+      <div class="step-title">Riepilogo</div>
+      <div class="step-sub">Verifica le visite e salva</div>
+      <div id="wizRecapCards"></div>
+    </div>
+
+    <!-- SCHERMATA SUCCESSO (fuori dagli step) -->
+    <div id="wizSuccess" class="wizard-success">
+      <div class="success-bee">✅</div>
+      <h3 style="color:var(--green);font-size:1.3rem">Visita salvata!</h3>
+      <p id="wizSuccessMsg" style="color:var(--text-light);font-size:0.9rem"></p>
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap;justify-content:center;margin-top:0.5rem">
+        <button onclick="riapriCalendarioVisita()" style="padding:0.7rem 1.3rem;background:white;border:1.5px solid var(--amber);border-radius:8px;color:var(--brown);font-size:0.95rem;font-weight:600;cursor:pointer">📅 Prossima visita</button>
+        <button onclick="resetWizard()" class="btn-another" style="padding:0.7rem 1.5rem;background:var(--amber-pale);border:1.5px solid var(--amber);border-radius:8px;color:var(--brown);font-size:0.95rem;font-weight:600;cursor:pointer">+ Nuova visita</button>
+      </div>
+    </div>
+
+  </div><!-- wizard-body -->
+
+  <!-- NAV BOTTOM -->
+  <div class="wizard-nav" id="wizNav">
+    <button class="btn-prev" id="btnPrev" onclick="prevStep()" style="display:none">← Indietro</button>
+    <button class="btn-next" id="btnNext" onclick="nextStep()">Avanti →</button>
+  </div>
+</div>
+
+<div class="toast-w" id="wizToast"></div>
+
+<script>
+// ===== STATE =====
+let dbData   = { arnie: [], logBook: [] };
+let magData  = { articoli: [], movimentazioni: [] };
+let contData = { movimentiContabili: [] };
+let step = 1;
+const TOTAL_STEPS = 4;
+
+// Wizard state
+let selectedArniaId = null;       // arnia corrente nello step 3
+let selectedArniaIds = [];        // tutte le arnie selezionate (step 1)
+let currentArniaIndex = 0;        // indice arnia corrente durante step 3 ripetuti
+let perArniaData = {};            // { arniaId: { note, varroa, ispezione, raccolta, trattamento, accessoriPending } }
+let selectedTipi    = [];
+let wizRaccoltaCount = 0;
+
+// TELAINO_OPZIONI è in shared.js — uso quello
+
+// ===== TOAST =====
+function showToast(msg, dur=2800) {
+  const t = document.getElementById('wizToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ===== HAPTIC FEEDBACK =====
+function hapticTap()     { if(navigator.vibrate) navigator.vibrate(15); }
+function hapticSuccess() { if(navigator.vibrate) navigator.vibrate([30, 50, 30]); }
+
+// ===== NOTE: aggiunge una frase suggerita al campo note =====
+function aggiungiNotaSuggerita(testo) {
+  hapticTap();
+  const ta = document.getElementById('wizNote');
+  ta.value = ta.value ? ta.value.trim() + '. ' + testo : testo;
+  updateWizNav();
+  ta.focus();
+}
+
+// ===== Helper: giorni passati da una data ISO =====
+function daysSince(dateStr) {
+  if(!dateStr) return null;
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now - d;
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+}
+function formatGiorniFa(dateStr) {
+  const d = daysSince(dateStr);
+  if(d === null) return '';
+  if(d === 0) return 'oggi';
+  if(d === 1) return 'ieri';
+  if(d < 7) return `${d} giorni fa`;
+  if(d < 14) return '1 settimana fa';
+  if(d < 30) return `${Math.floor(d/7)} settimane fa`;
+  if(d < 60) return '1 mese fa';
+  return `${Math.floor(d/30)} mesi fa`;
+}
+
+// ===== DRIVE =====
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    initDrive(
+      async () => {
+        showLoadingState('🔄 Caricamento dati...');
+        try {
+          const { db, mag, cont } = await Storage.carica();
+          if(db)   dbData   = db;
+          if(mag)  magData  = mag;
+          if(cont) contData = cont;
+          showWizard();
+        } catch(e) {
+          console.error('[Apiario] Errore caricamento iniziale:', e);
+          if(e.message === 'DRIVE_UNAUTHORIZED') {
+            showLoginState();
+          } else {
+            showLoadingState('❌ Errore: ' + e.message);
+          }
+        }
+      },
+      () => showLoadingState('🔄 Caricamento dati...'),
+      () => showLoginState()
+    );
+  }, 600);
+});
+
+function showLoadingState(msg) {
+  document.getElementById('wizLoginScreen').innerHTML = `
+    <div style="font-size:2rem;margin-bottom:0.5rem">⏳</div>
+    <p style="color:var(--brown);font-weight:600">${msg}</p>`;
+}
+function showLoginState() {
+  document.getElementById('wizLoginScreen').innerHTML = `
+    <div style="font-size:3.5rem">🐝</div>
+    <h2 style="color:var(--brown);font-size:1.3rem">Connetti Google Drive</h2>
+    <p style="color:var(--text-light);font-size:0.95rem;line-height:1.5">Accedi per sincronizzare le visite.</p>
+    <button class="btn-google" onclick="driveLogin()">
+      <svg width="18" height="18" viewBox="0 0 48 48">
+        <path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Accedi con Google
+    </button>`;
+}
+
+function showWizard() {
+  document.getElementById('wizLoginScreen').style.display = 'none';
+  document.getElementById('wizContent').style.display = 'block';
+  document.getElementById('wizDriveDot').classList.add('connected');
+  document.getElementById('wizData').value = today();
+  // Listener per validazione realtime nota
+  document.getElementById('wizNote').addEventListener('input', updateWizNav);
+  renderStep1();
+  updateWizNav();
+}
+
+// ===== STEP NAVIGATION =====
+function updateWizHeader() {
+  // Aggiorna i cerchi step: done (spunta) / active / futuro
+  for(let i=1; i<=4; i++) {
+    const el = document.getElementById(`prog-${i}`);
+    if(!el) continue;
+    el.className = 'wiz-step' + (i < step ? ' done' : i === step ? ' active' : '');
+    const circ = el.querySelector('.circ');
+    if(circ) circ.textContent = (i < step) ? '✓' : i;
+  }
+}
+
+function updateWizNav() {
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  btnPrev.style.display = step > 1 ? 'block' : 'none';
+  if(step === 4) {
+    const n = selectedArniaIds.length;
+    btnNext.textContent = n > 1 ? `💾 Salva ${n} visite` : '💾 Salva visita';
+    btnNext.classList.add('green');
+  } else if(step === 3 && currentArniaIndex < selectedArniaIds.length - 1) {
+    // Ci sono altre arnie dopo questa
+    btnNext.textContent = 'Prossima arnia →';
+    btnNext.classList.remove('green');
+  } else if(step === 3 && selectedArniaIds.length > 1) {
+    // Ultima arnia → vai al recap
+    btnNext.textContent = 'Riepilogo →';
+    btnNext.classList.remove('green');
+  } else {
+    btnNext.textContent = 'Avanti →';
+    btnNext.classList.remove('green');
+  }
+  // Validazione realtime: disabilita tasto se step incompleto
+  const valid = isStepValid(step);
+  btnNext.disabled = !valid;
+  btnNext.style.opacity = valid ? '1' : '0.5';
+  updateWizHeader();
+}
+
+function isStepValid(s) {
+  if(s === 1) return selectedArniaIds.length > 0;
+  if(s === 2) return selectedTipi.length > 0;
+  return true; // step 3 e 4 sempre validi (note opzionali)
+}
+
+function aggiornaBannerArnia() {
+  const banner = document.getElementById('wizArniaBanner');
+  const txt = document.getElementById('wizArniaBannerText');
+  if(!banner || !txt) { console.warn('[Visita] Banner arnia: elemento non trovato'); return; }
+  console.log('[Visita] aggiornaBannerArnia → step:', step, 'selectedArniaId:', selectedArniaId, 'index:', currentArniaIndex, 'di', selectedArniaIds.length);
+  if(step === 2 && selectedArniaIds.length > 0) {
+    txt.textContent = selectedArniaIds.length === 1
+      ? (() => { const a=(dbData.arnie||[]).find(x=>x.id===selectedArniaIds[0]); return a?`Arnia #${a.num}${a.nome?' — '+a.nome:''}`:'1 arnia'; })()
+      : `${selectedArniaIds.length} arnie selezionate`;
+    banner.style.display = 'block';
+  } else if(step === 3 && selectedArniaId) {
+    const a = (dbData.arnie||[]).find(x => x.id === selectedArniaId);
+    if(a) {
+      const prog = selectedArniaIds.length > 1 ? ` (${currentArniaIndex+1}/${selectedArniaIds.length})` : '';
+      txt.textContent = `Arnia #${a.num}${a.nome?' — '+a.nome:''}${prog}`;
+      banner.style.display = 'block';
+    }
+  } else if(step === 4) {
+    txt.textContent = selectedArniaIds.length > 1 ? `Riepilogo ${selectedArniaIds.length} visite` : 'Riepilogo visita';
+    banner.style.display = 'block';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function showStep(n) {
+  for(let i=1; i<=4; i++) document.getElementById(`step${i}`).style.display = 'none';
+  document.getElementById(`step${n}`).style.display = 'block';
+  step = n;
+  aggiornaBannerArnia();
+  updateWizNav();
+  window.scrollTo(0,0);
+}
+
+function nextStep() {
+  hapticTap();
+
+  // STEP 4 → salva
+  if(step === 4) { saveVisita(); return; }
+
+  if(!validateStep(step)) return;
+
+  // STEP 2 → inizia il primo step 3 (prima arnia)
+  if(step === 2) {
+    currentArniaIndex = 0;
+    selectedArniaId = selectedArniaIds[0];
+    perArniaData = {}; // reset store
+    renderStep3();
+    showStep(3);
+    return;
+  }
+
+  // STEP 3 → salva dati arnia corrente, poi prossima arnia o step 4
+  if(step === 3) {
+    salvaDatiArniaCorrente();
+    if(currentArniaIndex < selectedArniaIds.length - 1) {
+      // Passa alla prossima arnia (resta su step 3)
+      currentArniaIndex++;
+      selectedArniaId = selectedArniaIds[currentArniaIndex];
+      aggiornaBannerArnia();
+      renderStep3();
+      window.scrollTo(0, 0);
+      updateWizNav();
+      return;
+    } else {
+      // Ultima arnia completata → step 4 recap
+      renderRecap();
+      showStep(4);
+      return;
+    }
+  }
+
+  showStep(step + 1);
+}
+
+function prevStep() {
+  hapticTap();
+  // Se in step 3 e non sono alla prima arnia → torna all'arnia precedente
+  if(step === 3 && currentArniaIndex > 0) {
+    salvaDatiArniaCorrente(); // salva quella corrente prima di tornare
+    currentArniaIndex--;
+    selectedArniaId = selectedArniaIds[currentArniaIndex];
+    renderStep3();
+    aggiornaBannerArnia();
+    window.scrollTo(0, 0);
+    updateWizNav();
+    return;
+  }
+  // Se in step 4 → torna all'ultima arnia dello step 3
+  if(step === 4) {
+    currentArniaIndex = selectedArniaIds.length - 1;
+    selectedArniaId = selectedArniaIds[currentArniaIndex];
+    renderStep3();
+    showStep(3);
+    return;
+  }
+  if(step > 1) showStep(step - 1);
+}
+
+function validateStep(s) {
+  if(s === 1 && selectedArniaIds.length === 0) { showToast('⚠️ Seleziona almeno un\'arnia'); return false; }
+  if(s === 2 && selectedTipi.length === 0) { showToast('⚠️ Seleziona almeno un tipo di intervento'); return false; }
+  return true;
+}
+
+// ===== STEP 1: ARNIE =====
+function renderStep1() {
+  const arnie = dbData.arnie || [];
+  const grid = document.getElementById('wizArnieGrid');
+  if(arnie.length === 0) {
+    grid.innerHTML = '<div style="color:var(--text-light);font-style:italic;text-align:center;padding:2rem">Nessuna arnia nel database. Aggiungine una dall\'app principale.</div>';
+    return;
+  }
+  const statoLabel = {attiva:'Attiva',debole:'Debole',problema:'Problema',invernata:'Invernata'};
+  const statoCls   = {attiva:'stato-attiva',debole:'stato-debole',problema:'stato-problema',invernata:'stato-invernata'};
+
+  grid.innerHTML = arnie.map(a => {
+    const ultimaIsp = (dbData.logBook||[]).find(e => {
+      const t = getTipi(e);
+      return e.arniaId===a.id && t.includes('ispezione') && e.ispezione;
+    });
+    return `
+    <div class="arnia-card-w${selectedArniaId===a.id?' selected':''}" onclick="selectArnia('${a.id}')">
+      <div class="arnia-card-num">#${a.num}</div>
+      <div class="arnia-card-info">
+        <div class="arnia-card-nome">${a.nome||'Arnia #'+a.num}</div>
+        <div class="arnia-card-meta">${a.razza||''}${a.razza&&a.reginaAnno?' · ':''}${a.reginaAnno?(typeof getReginaPallino==='function'?getReginaPallino(a.reginaAnno,11):'')+'Regina '+a.reginaAnno:''}</div>
+        ${ultimaIsp?`<div class="arnia-last-isp">Ultima isp: ${formatGiorniFa(ultimaIsp.data)} (${formatDate(ultimaIsp.data)})</div>`:''}
+      </div>
+      <span class="arnia-card-stato ${statoCls[a.status]||'stato-attiva'}">${statoLabel[a.status]||a.status}</span>
+    </div>`;
+  }).join('');
+}
+
+function selectArnia(id) {
+  hapticTap();
+  // Toggle selezione multipla
+  const idx = selectedArniaIds.indexOf(id);
+  if(idx >= 0) {
+    selectedArniaIds.splice(idx, 1);
+  } else {
+    selectedArniaIds.push(id);
+  }
+  // Aggiorna evidenziazione card
+  document.querySelectorAll('.arnia-card-w').forEach(c => {
+    const cid = c.getAttribute('onclick').match(/'([^']+)'/);
+    if(cid) c.classList.toggle('selected', selectedArniaIds.includes(cid[1]));
+  });
+  // Aggiorna contatore
+  updateArnieCounter();
+  updateWizNav();
+}
+
+function updateArnieCounter() {
+  let counter = document.getElementById('wizArnieCounter');
+  if(!counter) {
+    const sub = document.querySelector('#step1 .step-sub');
+    if(sub) {
+      counter = document.createElement('span');
+      counter.id = 'wizArnieCounter';
+      counter.style.cssText = 'color:var(--amber);font-weight:700';
+      sub.appendChild(document.createTextNode(' '));
+      sub.appendChild(counter);
+    }
+  }
+  if(counter) {
+    counter.textContent = selectedArniaIds.length > 0 ? `· ${selectedArniaIds.length} selezionate` : '';
+  }
+}
+
+// ===== STEP 2: TIPO =====
+function toggleTipo(el) {
+  hapticTap();
+  el.classList.toggle('selected');
+  const tipo = el.dataset.tipo;
+  if(el.classList.contains('selected')) {
+    if(!selectedTipi.includes(tipo)) selectedTipi.push(tipo);
+  } else {
+    selectedTipi = selectedTipi.filter(t => t !== tipo);
+  }
+  updateWizNav();
+}
+
+// ===== STEP 3: DETTAGLI =====
+function renderStep3() {
+  const hasIsp  = selectedTipi.includes('ispezione');
+  const hasRac  = selectedTipi.includes('produzione');
+  const hasTrat = selectedTipi.includes('trattamento');
+  document.getElementById('wizIspSection').style.display          = hasIsp  ? 'block' : 'none';
+  document.getElementById('wizRaccoltaSection').style.display     = hasRac  ? 'block' : 'none';
+  document.getElementById('wizTrattamentoSection').style.display  = hasTrat ? 'block' : 'none';
+  document.getElementById('wizNoDetail').style.display            = (!hasIsp && !hasRac && !hasTrat) ? 'block' : 'none';
+
+  // Reset campi prima di precompilare/ripristinare
+  resetStep3Fields();
+
+  // Reset accessori pending per la nuova arnia
+  _wizAccPending = { melariDaRimuovere: [], reteToggle: null, trappolaToggle: null };
+  _wizMelariAggiunti = [];
+
+  if(hasIsp) renderWizIspezione();
+  if(hasRac) renderWizRaccolta();
+  if(hasTrat) renderWizTrattamento();
+
+  // Sempre: render accessori produttivi
+  renderWizAccessori();
+
+  // Ripristina dati già inseriti per questa arnia (se torno indietro),
+  // altrimenti precompila ispezione dall'ultima visita
+  const saved = perArniaData[selectedArniaId];
+  if(saved) {
+    ripristinaDatiArnia(saved);
+  } else if(hasIsp) {
+    precompilaWizIspezione();
+  }
+}
+
+// Reset dei campi dello step 3
+function resetStep3Fields() {
+  const note = document.getElementById('wizNote'); if(note) note.value = '';
+  const varroa = document.getElementById('wizVarroa'); if(varroa) varroa.value = '';
+  const cov = document.getElementById('wizCovata'); if(cov) cov.value = '';
+  const sco = document.getElementById('wizScorte'); if(sco) sco.value = '';
+  const cel = document.getElementById('wizCelleReali'); if(cel) cel.value = '';
+  const trP = document.getElementById('wizTrattProdotto'); if(trP) trP.value = '';
+  const trD = document.getElementById('wizTrattDosaggio'); if(trD) trD.value = '';
+  // Reset telaini (DOM)
+  const telRow = document.getElementById('wizTelainiNumRow'); if(telRow) telRow.innerHTML = '';
+  const telMap = document.getElementById('wizTelainiMap'); if(telMap) telMap.innerHTML = '';
+}
+
+// Precompila ispezione dall'ultima visita di questa arnia
+function precompilaWizIspezione() {
+  try {
+    // renderWizIspezione() già precompila dall'ultima ispezione di selectedArniaId
+    // quindi qui non serve fare nulla di extra: la chiamata in renderStep3 lo fa.
+  } catch(err) {
+    console.error('[Visita rapida] Errore precompila:', err.message);
+  }
+}
+
+// Salva i dati dell'arnia corrente nello store perArniaData
+function salvaDatiArniaCorrente() {
+  try {
+    const note = document.getElementById('wizNote')?.value.trim() || '';
+    const varroa = document.getElementById('wizVarroa')?.value || '';
+    let ispezioneData = null, raccoltaData = null, trattamentoData = null;
+    if(selectedTipi.includes('ispezione')) ispezioneData = getWizIspezioneData();
+    if(selectedTipi.includes('produzione')) raccoltaData = getWizRaccoltaData();
+    if(selectedTipi.includes('trattamento')) trattamentoData = getWizTrattamentoData();
+
+    perArniaData[selectedArniaId] = {
+      note, varroa,
+      ispezione: ispezioneData,
+      raccolta: raccoltaData,
+      trattamento: trattamentoData,
+      accPending: JSON.parse(JSON.stringify(_wizAccPending)),
+      melariAggiunti: JSON.parse(JSON.stringify(_wizMelariAggiunti)),
+    };
+  } catch(err) {
+    console.error('[Visita rapida] Errore salvaDatiArniaCorrente:', err.message);
+  }
+}
+
+// Ripristina dati salvati per un'arnia (quando torno indietro)
+function ripristinaDatiArnia(saved) {
+  try {
+    const note = document.getElementById('wizNote'); if(note) note.value = saved.note || '';
+    const varroa = document.getElementById('wizVarroa'); if(varroa) varroa.value = saved.varroa || '';
+    if(saved.ispezione) {
+      const cov = document.getElementById('wizCovata'); if(cov) cov.value = saved.ispezione.covata || '';
+      const sco = document.getElementById('wizScorte'); if(sco) sco.value = saved.ispezione.scorte || '';
+      const cel = document.getElementById('wizCelleReali'); if(cel) cel.value = saved.ispezione.celleReali ?? '';
+      if(saved.ispezione.telaini && selectedTipi.includes('ispezione')) {
+        renderWizTelainiNum(saved.ispezione.telaini, saved.ispezione.mappa);
+      }
+    }
+    if(saved.trattamento) {
+      const trP = document.getElementById('wizTrattProdotto'); if(trP) trP.value = saved.trattamento.prodotto || '';
+      const trD = document.getElementById('wizTrattDosaggio'); if(trD) trD.value = saved.trattamento.dosaggio || '';
+    }
+    if(saved.accPending) _wizAccPending = JSON.parse(JSON.stringify(saved.accPending));
+    if(saved.melariAggiunti) _wizMelariAggiunti = JSON.parse(JSON.stringify(saved.melariAggiunti));
+    renderWizAccessori();
+  } catch(err) {
+    console.error('[Visita rapida] Errore ripristinaDatiArnia:', err.message);
+  }
+}
+
+// ===== ACCESSORI PRODUTTIVI (Wizard) =====
+let _wizAccPending = { melariDaRimuovere: [], reteToggle: null, trappolaToggle: null };
+let _wizMelariAggiunti = [];
+
+function renderWizAccessori() {
+  const cont = document.getElementById('wizAccessoriContent');
+  if(!cont) return;
+  const a = (dbData.arnie||[]).find(x => x.id === selectedArniaId);
+  if(!a) { cont.innerHTML = '<div style="color:var(--text-light);font-style:italic;font-size:0.85rem">Seleziona prima un\'arnia.</div>'; return; }
+
+  let html = '';
+
+  // Melari
+  const melari = a.melari || [];
+  const melariAttivi = melari.filter((m, i) => m.status === 'posizionato' && !_wizAccPending.melariDaRimuovere.includes(i));
+  html += '<div style="margin-bottom:0.8rem">';
+  html += '<div style="font-weight:600;color:var(--brown);margin-bottom:0.3rem;font-size:0.88rem">🍯 Melari</div>';
+  if(melariAttivi.length === 0) {
+    html += '<div style="font-size:0.82rem;color:var(--text-light);font-style:italic;margin-bottom:0.3rem">Nessun melario attivo</div>';
+  } else {
+    melariAttivi.forEach(m => {
+      const realIdx = melari.indexOf(m);
+      html += `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.55rem;background:white;border:1px solid var(--cream-dark);border-radius:4px;margin-bottom:0.25rem;font-size:0.82rem">
+          <span><strong>${m.num} tel.</strong>${m.note ? ' '+m.note : ''}</span>
+          <button type="button" onclick="wizRimuoviMelario(${realIdx})" style="background:var(--red);color:white;border:none;padding:0.2rem 0.5rem;border-radius:3px;font-size:0.72rem;cursor:pointer">🗑</button>
+        </div>
+      `;
+    });
+  }
+  if(_wizAccPending.melariDaRimuovere.length > 0) {
+    html += `<div style="font-size:0.78rem;color:var(--red);font-style:italic;margin-top:0.2rem">⚠️ ${_wizAccPending.melariDaRimuovere.length} melario(i) verrà(nno) smielato(i)</div>`;
+  }
+  html += `<div style="display:flex;gap:0.3rem;margin-top:0.3rem">
+    <input type="number" id="wizMelNum" min="1" max="12" placeholder="N° tel." style="flex:1;padding:0.3rem 0.5rem;border:1px solid var(--cream-dark);border-radius:3px;font-size:0.82rem">
+    <input type="text" id="wizMelNote" placeholder="Note" style="flex:2;padding:0.3rem 0.5rem;border:1px solid var(--cream-dark);border-radius:3px;font-size:0.82rem">
+    <button type="button" onclick="wizAggiungiMelario()" style="background:var(--amber);color:white;border:none;padding:0.3rem 0.6rem;border-radius:3px;font-size:0.78rem;cursor:pointer">➕</button>
+  </div>`;
+  if(_wizMelariAggiunti.length > 0) {
+    html += '<div style="margin-top:0.4rem;padding:0.35rem 0.55rem;background:#EEF6E7;border-left:3px solid var(--green);border-radius:3px;font-size:0.78rem">';
+    html += `<strong>${_wizMelariAggiunti.length} da aggiungere:</strong> ${_wizMelariAggiunti.map(m=>m.num+' tel.').join(', ')}`;
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // Rete propoli
+  html += '<div style="margin-bottom:0.8rem">';
+  html += '<div style="font-weight:600;color:var(--brown);margin-bottom:0.3rem;font-size:0.88rem">🌿 Rete propoli</div>';
+  const reteAtt = a.retePropoli && a.retePropoli.attiva !== false && _wizAccPending.reteToggle !== 'disattiva';
+  const reteAttPend = _wizAccPending.reteToggle === 'attiva';
+  const reteEff = reteAtt || reteAttPend;
+  if(reteEff) {
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.55rem;background:white;border:1px solid var(--cream-dark);border-radius:4px;font-size:0.82rem">
+      <span>✓ Attiva${reteAttPend?' <em style="color:var(--green)">(nuova)</em>':''}</span>
+      <button type="button" onclick="wizToggleRete('disattiva')" style="background:var(--red);color:white;border:none;padding:0.2rem 0.5rem;border-radius:3px;font-size:0.72rem;cursor:pointer">🗑</button>
+    </div>`;
+  } else if(_wizAccPending.reteToggle === 'disattiva') {
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.55rem;background:#FDF0F0;border:1px solid var(--red);border-radius:4px;font-size:0.82rem">
+      <span style="color:var(--red)">⚠️ Sarà disattivata</span>
+      <button type="button" onclick="wizToggleRete(null)" style="background:none;border:1px solid var(--text-light);color:var(--text-light);padding:0.2rem 0.5rem;border-radius:3px;font-size:0.72rem;cursor:pointer">↶</button>
+    </div>`;
+  } else {
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.55rem;background:white;border:1px dashed var(--cream-dark);border-radius:4px;font-size:0.82rem">
+      <span style="color:var(--text-light);font-style:italic">Non attiva</span>
+      <button type="button" onclick="wizToggleRete('attiva')" style="background:var(--amber);color:white;border:none;padding:0.2rem 0.6rem;border-radius:3px;font-size:0.72rem;cursor:pointer">➕ Attiva</button>
+    </div>`;
+  }
+  html += '</div>';
+
+  // Trappola polline
+  html += '<div>';
+  html += '<div style="font-weight:600;color:var(--brown);margin-bottom:0.3rem;font-size:0.88rem">🌾 Trappola polline</div>';
+  const trapAtt = a.trappolaPolline && a.trappolaPolline.attiva !== false && _wizAccPending.trappolaToggle !== 'disattiva';
+  const trapAttPend = _wizAccPending.trappolaToggle === 'attiva';
+  const trapEff = trapAtt || trapAttPend;
+  if(trapEff) {
+    const pos = a.trappolaPolline?.posizione || 'Entrata';
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.55rem;background:white;border:1px solid var(--cream-dark);border-radius:4px;font-size:0.82rem">
+      <span>✓ Attiva (${pos})${trapAttPend?' <em style="color:var(--green)">(nuova)</em>':''}</span>
+      <button type="button" onclick="wizToggleTrappola('disattiva')" style="background:var(--red);color:white;border:none;padding:0.2rem 0.5rem;border-radius:3px;font-size:0.72rem;cursor:pointer">🗑</button>
+    </div>`;
+  } else if(_wizAccPending.trappolaToggle === 'disattiva') {
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.55rem;background:#FDF0F0;border:1px solid var(--red);border-radius:4px;font-size:0.82rem">
+      <span style="color:var(--red)">⚠️ Sarà disattivata</span>
+      <button type="button" onclick="wizToggleTrappola(null)" style="background:none;border:1px solid var(--text-light);color:var(--text-light);padding:0.2rem 0.5rem;border-radius:3px;font-size:0.72rem;cursor:pointer">↶</button>
+    </div>`;
+  } else {
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.55rem;background:white;border:1px dashed var(--cream-dark);border-radius:4px;font-size:0.82rem">
+      <span style="color:var(--text-light);font-style:italic">Non attiva</span>
+      <button type="button" onclick="wizToggleTrappola('attiva')" style="background:var(--amber);color:white;border:none;padding:0.2rem 0.6rem;border-radius:3px;font-size:0.72rem;cursor:pointer">➕ Attiva</button>
+    </div>`;
+  }
+  html += '</div>';
+
+  cont.innerHTML = html;
+}
+
+function wizRimuoviMelario(idx) {
+  hapticTap();
+  if(!_wizAccPending.melariDaRimuovere.includes(idx)) {
+    _wizAccPending.melariDaRimuovere.push(idx);
+  }
+  renderWizAccessori();
+}
+
+function wizAggiungiMelario() {
+  hapticTap();
+  const num = document.getElementById('wizMelNum')?.value;
+  if(!num) { showToast('Inserisci il numero di telaini'); return; }
+  const note = document.getElementById('wizMelNote')?.value.trim() || '';
+  _wizMelariAggiunti.push({ num, note, data: document.getElementById('wizData')?.value || new Date().toISOString().slice(0,10), status: 'posizionato', id: Date.now().toString() });
+  document.getElementById('wizMelNum').value = '';
+  document.getElementById('wizMelNote').value = '';
+  renderWizAccessori();
+}
+
+function wizToggleRete(action) {
+  hapticTap();
+  _wizAccPending.reteToggle = action;
+  renderWizAccessori();
+}
+
+function wizToggleTrappola(action) {
+  hapticTap();
+  _wizAccPending.trappolaToggle = action;
+  renderWizAccessori();
+}
+
+function applicaModificheAccessoriWiz(arniaObj, dataVisita) {
+  if(!arniaObj) return;
+  // Melari rimossi → smielati
+  if(_wizAccPending.melariDaRimuovere.length > 0) {
+    if(!arniaObj.melari) arniaObj.melari = [];
+    _wizAccPending.melariDaRimuovere.forEach(idx => {
+      if(arniaObj.melari[idx]) {
+        arniaObj.melari[idx].status = 'produzione';
+        arniaObj.melari[idx].dataFine = dataVisita;
+      }
+    });
+  }
+  // Melari aggiunti
+  if(_wizMelariAggiunti.length > 0) {
+    if(!arniaObj.melari) arniaObj.melari = [];
+    _wizMelariAggiunti.forEach(m => arniaObj.melari.push({ ...m, data: m.data || dataVisita }));
+  }
+  // Rete propoli
+  if(_wizAccPending.reteToggle === 'attiva') {
+    arniaObj.retePropoli = { data: dataVisita, note: '', attiva: true, storico: arniaObj.retePropoli?.storico || [] };
+  } else if(_wizAccPending.reteToggle === 'disattiva') {
+    const r = arniaObj.retePropoli;
+    if(r) {
+      const storico = r.storico || [];
+      storico.push({ dataInizio: r.data, dataFine: dataVisita, note: r.note, stato: 'raschiata' });
+      arniaObj.retePropoli = { attiva: false, storico };
+    }
+  }
+  // Trappola polline
+  if(_wizAccPending.trappolaToggle === 'attiva') {
+    arniaObj.trappolaPolline = { posizione: arniaObj.trappolaPolline?.posizione || 'Entrata', data: dataVisita, note: '', attiva: true, storico: arniaObj.trappolaPolline?.storico || [] };
+  } else if(_wizAccPending.trappolaToggle === 'disattiva') {
+    const t = arniaObj.trappolaPolline;
+    if(t) {
+      const storico = t.storico || [];
+      storico.push({ dataInizio: t.data, dataFine: dataVisita, posizione: t.posizione, note: t.note });
+      arniaObj.trappolaPolline = { attiva: false, storico };
+    }
+  }
+  // Reset
+  _wizAccPending = { melariDaRimuovere: [], reteToggle: null, trappolaToggle: null };
+  _wizMelariAggiunti = [];
+}
+
+function renderWizTrattamento() {
+  // Pre-seleziona il prodotto in base alla stagione
+  const prod = document.getElementById('wizTrattProdotto');
+  if(!prod.value) {
+    const mese = new Date().getMonth() + 1; // 1-12
+    if(mese >= 11 || mese <= 1) prod.value = 'apibioxal';   // inverno (nov-gen)
+    else prod.value = 'varromed';                            // primavera + estate
+  }
+}
+
+function getWizTrattamentoData() {
+  const prodotto = document.getElementById('wizTrattProdotto')?.value || '';
+  const dosaggio = document.getElementById('wizTrattDosaggio')?.value || '';
+  if(!prodotto && !dosaggio) return null;
+  return { prodotto, dosaggio };
+}
+
+function renderWizIspezione() {
+  const ultimaIsp = (dbData.logBook||[]).find(e => {
+    const t = getTipi(e);
+    return e.arniaId === selectedArniaId && t.includes('ispezione') && e.ispezione;
+  });
+
+  // Precompila dropdown covata e scorte
+  document.getElementById('wizCovata').value     = ultimaIsp?.ispezione?.covata     || '';
+  document.getElementById('wizScorte').value     = ultimaIsp?.ispezione?.scorte     || '';
+  document.getElementById('wizCelleReali').value = ultimaIsp?.ispezione?.celleReali ?? '';
+
+  // Telaini
+  const numTel = ultimaIsp?.ispezione?.telaini || 0;
+  renderWizTelainiNum(numTel, ultimaIsp?.ispezione?.mappa);
+
+  if(ultimaIsp) showToast(`📋 Precompilato da ${formatDate(ultimaIsp.data)}`);
+}
+
+function renderWizTelainiNum(selected, mappa) {
+  const row = document.getElementById('wizTelainiNumRow');
+  row.innerHTML = Array.from({length:10},(_,i)=>i+1).map(n =>
+    `<button class="tel-num-btn${n===selected?' selected':''}" onclick="selectTelainiNum(${n})">${n}</button>`
+  ).join('');
+  if(selected > 0) renderWizTelainiMap(selected, mappa);
+}
+
+function selectTelainiNum(n) {
+  document.querySelectorAll('.tel-num-btn').forEach(b =>
+    b.classList.toggle('selected', parseInt(b.textContent) === n)
+  );
+  // Preserva le selezioni già fatte: leggo la mappa corrente e la ripasso.
+  // Aumentando → i telai esistenti restano e il nuovo è vuoto; diminuendo → si toglie l'ultimo.
+  const mappaCorrente = leggiMappaTelainiCorrente();
+  renderWizTelainiMap(n, mappaCorrente);
+}
+
+// Legge lo stato attuale dei select telaini (per non perderlo al cambio numero)
+function leggiMappaTelainiCorrente() {
+  const mappa = [];
+  for(let i = 0; i < 10; i++) {
+    const sel = document.getElementById('wizTel_' + i);
+    if(!sel) break;
+    mappa[i] = sel.value;
+  }
+  return mappa;
+}
+
+function renderWizTelainiMap(n, mappa) {
+  const container = document.getElementById('wizTelainiMap');
+  container.innerHTML = Array.from({length:n},(_,i) =>
+    `<div class="tel-item-w">
+      <span class="tel-label-w">T${i+1}</span>
+      <select id="wizTel_${i}">
+        ${TELAINO_OPZIONI.map(o=>`<option value="${o.value}"${(mappa&&mappa[i]===o.value)?'selected':''}>${o.label}</option>`).join('')}
+      </select>
+    </div>`
+  ).join('');
+}
+
+function getWizIspezioneData() {
+  const covata     = document.getElementById('wizCovata')?.value     || '';
+  const scorte     = document.getElementById('wizScorte')?.value     || '';
+  const celleReali = document.getElementById('wizCelleReali')?.value ?? '';
+  const selTel     = document.querySelector('.tel-num-btn.selected');
+  const numTel     = selTel ? parseInt(selTel.textContent) : null;
+  const mappa      = numTel ? Array.from({length:numTel},(_,i) => document.getElementById(`wizTel_${i}`)?.value||'') : null;
+  return { covata, scorte, celleReali, telaini: numTel, mappa };
+}
+
+// ===== RACCOLTA =====
+function renderWizRaccolta() {
+  document.getElementById('wizRaccoltaRighe').innerHTML = '';
+  wizRaccoltaCount = 0;
+  addWizRaccoltaRiga();
+}
+
+function addWizRaccoltaRiga() {
+  const prodotti = (magData.articoli||[]).filter(a => a.categoria === 'prodotto');
+  if(prodotti.length === 0) { showToast('⚠️ Nessun prodotto finito in magazzino'); return; }
+  const idx = wizRaccoltaCount++;
+  const div = document.createElement('div');
+  div.className = 'raccolta-row-w';
+  div.id = `wizRac_${idx}`;
+  div.innerHTML = `
+    <select id="wizRacArt_${idx}" onchange="wizRacArtChange(${idx})">
+      <option value="">— Prodotto —</option>
+      ${prodotti.map(a=>`<option value="${a.id}" data-unita="${a.unita}">${a.nome}</option>`).join('')}
+    </select>
+    <input type="number" id="wizRacQta_${idx}" min="0" step="0.1" placeholder="Qtà" inputmode="decimal">
+    <span class="raccolta-unita-w" id="wizRacUnita_${idx}">—</span>
+    <button type="button" onclick="document.getElementById('wizRac_${idx}').remove()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--red)">✕</button>
+  `;
+  document.getElementById('wizRaccoltaRighe').appendChild(div);
+}
+
+function wizRacArtChange(idx) {
+  const sel = document.getElementById(`wizRacArt_${idx}`);
+  const opt = sel.options[sel.selectedIndex];
+  document.getElementById(`wizRacUnita_${idx}`).textContent = opt?.dataset?.unita || '—';
+}
+
+function getWizRaccoltaData() {
+  const result = [];
+  document.querySelectorAll('[id^="wizRac_"]').forEach(riga => {
+    const idx = riga.id.split('_')[1];
+    const artId = document.getElementById(`wizRacArt_${idx}`)?.value;
+    const qta   = parseFloat(document.getElementById(`wizRacQta_${idx}`)?.value);
+    if(artId && qta > 0) result.push({ articoloId: artId, qta });
+  });
+  return result;
+}
+
+// ===== STEP 4: RECAP MULTI-ARNIA =====
+const tipoLabel = {ispezione:'🔍 Ispezione',trattamento:'💊 Trattamento',nutrizione:'🍬 Nutrizione',produzione:'🍯 Raccolta',salute:'⚕️ Salute',altro:'📌 Altro'};
+// Etichette per riepilogo: usa CELLE_REALI_LABEL, COVATA_LABEL, SCORTE_LABEL da shared.js
+
+function renderRecap() {
+  try {
+    const container = document.getElementById('wizRecapCards');
+    if(!container) return;
+    const data = document.getElementById('wizData').value;
+
+    const cards = selectedArniaIds.map((aid, idx) => {
+      const arnia = (dbData.arnie||[]).find(a => a.id === aid);
+      const d = perArniaData[aid];
+      if(!arnia) return '';
+
+      let dettagli = '';
+      if(d) {
+        if(d.ispezione) {
+          const isp = d.ispezione;
+          const parts = [];
+          if(isp.covata) parts.push(`🟤 Covata ${isp.covata}/5`);
+          if(isp.scorte) parts.push(`🟡 Scorte ${isp.scorte}/5`);
+          if(isp.celleReali !== '' && isp.celleReali != null) parts.push(`👑 ${CELLE_REALI_LABEL[isp.celleReali]||isp.celleReali}`);
+          if(isp.telaini) parts.push(`📏 ${isp.telaini} telaini`);
+          if(parts.length) dettagli += `<div style="font-size:0.82rem;color:var(--text);margin-top:0.3rem">${parts.join(' · ')}</div>`;
+        }
+        if(d.raccolta && d.raccolta.length) {
+          d.raccolta.forEach(r => {
+            const art = (magData.articoli||[]).find(a=>a.id===r.articoloId);
+            dettagli += `<div style="font-size:0.82rem;color:var(--green);margin-top:0.2rem">🍯 ${r.qta} ${art?.unita||''} ${art?.nome||''}</div>`;
+          });
+        }
+        if(d.trattamento && d.trattamento.prodotto) {
+          const prodLabel = {varromed:'🌿 VarroMed', apibioxal:'❄️ Api-Bioxal', altro:'📌 Altro'}[d.trattamento.prodotto] || d.trattamento.prodotto;
+          dettagli += `<div style="font-size:0.82rem;color:#5e4a8a;margin-top:0.2rem">💊 ${prodLabel}${d.trattamento.dosaggio?' · '+d.trattamento.dosaggio:''}</div>`;
+        }
+        if(d.note) dettagli += `<div style="font-size:0.82rem;color:var(--text-light);font-style:italic;margin-top:0.3rem">"${d.note}"</div>`;
+        if(d.varroa) dettagli += `<div style="font-size:0.78rem;color:var(--text-light);margin-top:0.2rem">🕷 Varroa: ${d.varroa}/g</div>`;
+      }
+      if(!dettagli) dettagli = '<div style="font-size:0.82rem;color:var(--text-light);font-style:italic;margin-top:0.3rem">Nessun dettaglio inserito</div>';
+
+      return `
+        <div style="background:white;border:1px solid var(--cream-dark);border-left:4px solid var(--amber);border-radius:8px;padding:0.9rem 1rem;margin-bottom:0.7rem" onclick="vaiAModificaArnia(${idx})">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-weight:700;color:var(--brown)">🏠 #${arnia.num}${arnia.nome?' — '+arnia.nome:''}</span>
+            <span style="font-size:0.75rem;color:var(--amber);font-weight:600">✏️ modifica</span>
+          </div>
+          ${dettagli}
+        </div>`;
+    }).join('');
+
+    const tipiTxt = selectedTipi.map(t=>tipoLabel[t]||t).join(', ');
+    container.innerHTML = `
+      <div style="background:var(--amber-pale);border-radius:8px;padding:0.7rem 1rem;margin-bottom:1rem;font-size:0.88rem;color:var(--brown)">
+        📅 ${formatDate(data)} · ${tipiTxt}<br>
+        <strong>${selectedArniaIds.length} arni${selectedArniaIds.length>1?'e':'a'}</strong> da registrare
+      </div>
+      ${cards}`;
+  } catch(err) {
+    console.error('[Visita rapida] Errore in renderRecap:', err.message);
+  }
+}
+
+// Dal recap, torna a modificare una specifica arnia
+function vaiAModificaArnia(idx) {
+  hapticTap();
+  currentArniaIndex = idx;
+  selectedArniaId = selectedArniaIds[idx];
+  renderStep3();
+  showStep(3);
+}
+
+// ===== SALVATAGGIO =====
+async function saveVisita() {
+  try {
+    // Salva i dati dell'arnia corrente (se siamo arrivati da step 3 diretto)
+    // Nel flusso normale renderRecap viene dopo aver salvato, ma per sicurezza:
+    if(step === 3) salvaDatiArniaCorrente();
+
+    const data  = document.getElementById('wizData').value;
+    const annoVisita = data.slice(0,4);
+
+    if(!dbData.logBook) dbData.logBook = [];
+
+    let totRaccolte = 0;
+    let arnieRegistrate = 0;
+
+    // Trattamento è condiviso, lo prendo una volta
+    selectedArniaIds.forEach((aid, i) => {
+      const arnia = (dbData.arnie||[]).find(a => a.id === aid);
+      if(!arnia) { console.warn('[Visita rapida] Arnia non trovata:', aid); return; }
+      const d = perArniaData[aid] || {};
+
+      const entry = {
+        id: Date.now().toString() + i + Math.random().toString(36).slice(2),
+        data,
+        arniaId: aid,
+        arniaNome: `#${arnia.num}${arnia.nome?' – '+arnia.nome:''}`,
+        tipo: selectedTipi,
+        note: d.note || '',
+        varroa: d.varroa || '',
+        ispezione: d.ispezione || null,
+        raccolta: d.raccolta || null,
+        trattamento: d.trattamento || null,
+      };
+      dbData.logBook.unshift(entry);
+      arnieRegistrate++;
+
+      // Applica accessori produttivi (ripristino i pending di questa arnia nelle var globali)
+      if(d.accPending) _wizAccPending = d.accPending;
+      else _wizAccPending = { melariDaRimuovere: [], reteToggle: null, trappolaToggle: null };
+      if(d.melariAggiunti) _wizMelariAggiunti = d.melariAggiunti;
+      else _wizMelariAggiunti = [];
+      applicaModificheAccessoriWiz(arnia, data);
+      dbData.arnie = dbData.arnie.map(a => a.id === aid ? arnia : a);
+
+      // Movimenti magazzino per raccolta
+      if(d.raccolta && d.raccolta.length) {
+        d.raccolta.forEach(r => {
+          if(!magData.movimentazioni) magData.movimentazioni = [];
+          magData.movimentazioni.push({
+            id: Date.now().toString() + Math.random().toString(36).slice(2),
+            data, articoloId: r.articoloId, tipo: 'entrata', qta: r.qta,
+            note: `Da visita #${arnia.num} del ${formatDate(data)}`
+          });
+          totRaccolte++;
+          // Aggiorna produzionePerAnno
+          const art = (magData.articoli||[]).find(a=>a.id===r.articoloId);
+          if(!arnia.produzionePerAnno) arnia.produzionePerAnno = {};
+          if(!arnia.produzionePerAnno[annoVisita]) arnia.produzionePerAnno[annoVisita] = {};
+          const nomeArt = art ? art.nome : r.articoloId;
+          arnia.produzionePerAnno[annoVisita][nomeArt] =
+            (arnia.produzionePerAnno[annoVisita][nomeArt]||0) + r.qta;
+          dbData.arnie = dbData.arnie.map(a => a.id === aid ? arnia : a);
+        });
+      }
+    });
+
+    if(arnieRegistrate === 0) {
+      showToast('⚠️ Nessuna visita da salvare');
+      return;
+    }
+
+    const btn = document.getElementById('btnNext');
+    btn.disabled = true;
+    btn.textContent = '⏳ Salvataggio...';
+
+    await Storage.salvaTutto({
+      db:  { ...dbData },
+      mag: { ...magData }
+    });
+
+    // Nascondi step4, nav e banner — mostra schermata successo
+    document.getElementById('step4').style.display = 'none';
+    document.getElementById('wizNav').style.display = 'none';
+    document.getElementById('wizArniaBanner').style.display = 'none';
+
+    document.getElementById('wizSuccessMsg').textContent =
+      `${arnieRegistrate} visit${arnieRegistrate>1?'e':'a'} · ${formatDate(data)}${totRaccolte?' · '+totRaccolte+' prodotti a magazzino':''}`;
+    document.getElementById('wizSuccess').classList.add('show');
+    hapticSuccess();
+
+    // Popup "schedula prossima visita" (una sola volta per tutte le arnie della visita)
+    if(typeof showCalendarPopup === 'function') {
+      // Etichetta: nome arnia se singola, conteggio se multipla
+      let etichetta;
+      if(selectedArniaIds.length === 1) {
+        const a = dbData.arnie.find(x => x.id === selectedArniaIds[0]);
+        etichetta = a ? `#${a.num}${a.nome ? ' — ' + a.nome : ''}` : 'apiario';
+      } else {
+        etichetta = `${arnieRegistrate} arnie`;
+      }
+      _ultimaEtichettaVisita = etichetta;
+      // Piccolo ritardo per far vedere prima la schermata di successo
+      setTimeout(() => { showCalendarPopup(etichetta, null); }, 600);
+    }
+
+  } catch(e) {
+    console.error('[Visita rapida] Errore salvataggio:', e);
+    const btn = document.getElementById('btnNext');
+    if(e.message === 'DRIVE_UNAUTHORIZED') {
+      showToast('🔒 Sessione Google scaduta — accedi di nuovo', 4000);
+      setTimeout(() => {
+        document.getElementById('wizContent').style.display = 'none';
+        document.getElementById('wizLoginScreen').style.display = 'flex';
+        document.getElementById('wizDriveDot').classList.remove('connected');
+        showLoginState();
+      }, 1500);
+    } else {
+      showToast('❌ Errore salvataggio: ' + e.message);
+    }
+    if(btn) { btn.disabled = false; btn.textContent = '💾 Salva visita'; }
+  }
+}
+
+// Etichetta dell'ultima visita salvata (per riaprire il popup calendario)
+let _ultimaEtichettaVisita = 'apiario';
+
+function riapriCalendarioVisita() {
+  if(typeof showCalendarPopup === 'function') {
+    showCalendarPopup(_ultimaEtichettaVisita, null);
+  }
+}
+
+function resetWizard() {
+  selectedArniaId = null;
+  selectedArniaIds = [];
+  currentArniaIndex = 0;
+  perArniaData = {};
+  selectedTipi    = [];
+  wizRaccoltaCount = 0;
+  // Reset accessori produttivi
+  _wizAccPending = { melariDaRimuovere: [], reteToggle: null, trappolaToggle: null };
+  _wizMelariAggiunti = [];
+  document.getElementById('wizSuccess').classList.remove('show');
+  document.getElementById('wizNav').style.display = 'flex';
+  document.getElementById('wizArniaBanner').style.display = 'none';
+  // Reset contatore arnie
+  const counter = document.getElementById('wizArnieCounter');
+  if(counter) counter.textContent = '';
+  // Reset step 2
+  document.querySelectorAll('.tipo-chip-w').forEach(c => c.classList.remove('selected'));
+  // Reset step 3
+  document.getElementById('wizRaccoltaRighe').innerHTML = '';
+  document.getElementById('wizTelainiMap').innerHTML = '';
+  document.getElementById('wizTelainiNumRow').innerHTML = '';
+  document.getElementById('wizTrattProdotto').value = '';
+  document.getElementById('wizTrattDosaggio').value = '';
+  // Reset step 4
+  document.getElementById('wizNote').value = '';
+  document.getElementById('wizVarroa').value = '';
+  showStep(1);
+  renderStep1();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<!-- FILE VERSION: 2026-05-28.10 · inserimento_rapido.html -->
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Apiario — Inserimento rapido</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐝</text></svg>">
+<link rel="manifest" href="inserimento.manifest.json">
+<meta name="theme-color" content="#2C5F8A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Inserimento">
+<link rel="apple-touch-icon" href="icons/inser_192.png">
+<link rel="stylesheet" href="style-mobile.css?v=20260554">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="shared.js?v=20260567"></script>
+<script src="js/storage.js?v=20260567"></script>
+</head>
+<body>
+
+<header>
+  <span style="font-size:1.4rem">⬆️</span>
+  <h1>Inserimento</h1>
+  <div class="drive-dot" id="driveDot" title="Google Drive"></div>
+</header>
+
+<!-- LOGIN SCREEN -->
+<div id="driveLoginScreen">
+  <div class="bee">🐝</div>
+  <h2>Connetti Google Drive</h2>
+  <p>Accedi con il tuo account Google per sincronizzare i dati con l'apiario principale.</p>
+  <button class="btn-google" onclick="driveLogin()">
+    <svg width="18" height="18" viewBox="0 0 48 48">
+      <path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+      <path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+      <path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+    </svg>
+    Accedi con Google
+  </button>
+</div>
+
+<!-- APP CONTENT -->
+<div id="appContent" style="display:none">
+  <div class="ir-body-wrap">
+
+  <div class="content">
+
+    <!-- RIEPILOGO -->
+    <div class="section active" id="tabRiepilogo">
+      <div id="riepilogoContent">
+        <div style="color:var(--text-light);font-style:italic;font-size:0.9rem;text-align:center;padding:2rem">Caricamento...</div>
+      </div>
+    </div>
+
+    <!-- CONTABILITÀ -->
+    <div class="section" id="tabContabilita">
+      <div id="formContSuccess" class="success-anim">
+        <div class="success-icon">✅</div>
+        <h3>Salvato!</h3>
+        <p id="formContSuccessMsg"></p>
+        <button class="btn-another" onclick="resetFormCont()">+ Inserisci un altro</button>
+      </div>
+      <div id="formCont">
+        <div class="form-group" style="margin-bottom:0.8rem">
+          <label>Tipo movimento</label>
+          <div class="tipo-toggle">
+            <button class="tipo-toggle-btn active-entrata" id="btnEntrata" onclick="setTipoCont('entrata')">🟢 Entrata</button>
+            <button class="tipo-toggle-btn" id="btnUscita" onclick="setTipoCont('uscita')">🔴 Uscita</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Importo (€)</label>
+          <div class="importo-wrap">
+            <span class="euro">€</span>
+            <input type="number" id="contImporto" inputmode="decimal" placeholder="0.00" min="0" step="0.01">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Descrizione</label>
+          <input type="text" id="contDesc" placeholder="Es. Vendita 10 vasi acacia...">
+        </div>
+        <div class="form-group">
+          <label>Categorie</label>
+          <div class="chips-wrap" id="contCatChips"></div>
+        </div>
+        <div class="form-group">
+          <label>Data</label>
+          <input type="date" id="contData">
+        </div>
+        <div class="form-group">
+          <label>Note (opzionale)</label>
+          <textarea id="contNote" placeholder="Cliente, evento, fornitore..."></textarea>
+        </div>
+        <button class="btn-submit" id="btnSaveCont" onclick="saveContabilita()">💾 Salva movimento</button>
+      </div>
+    </div>
+
+    <!-- MAGAZZINO -->
+    <div class="section" id="tabMagazzino">
+      <div id="formMagSuccess" class="success-anim">
+        <div class="success-icon">✅</div>
+        <h3>Salvato!</h3>
+        <p id="formMagSuccessMsg"></p>
+        <button class="btn-another" onclick="resetFormMag()">+ Inserisci un altro</button>
+      </div>
+      <div id="formMag">
+        <div class="form-group">
+          <label>Tipo movimento</label>
+          <div class="tipo-toggle">
+            <button class="tipo-toggle-btn active-entrata" id="btnMagIn" onclick="setTipoMag('entrata')">➕ Entrata</button>
+            <button class="tipo-toggle-btn" id="btnMagOut" onclick="setTipoMag('uscita')">➖ Uscita</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Categoria</label>
+          <select id="magFiltroCat" onchange="populateMagArticoli()">
+            <option value="">— Tutte le categorie —</option>
+            <option value="farmaci">💊 Farmaci/sanitari</option>
+            <option value="alimentazione">🍬 Alimentazione</option>
+            <option value="telai_cera">🪵 Telai e cera</option>
+            <option value="arnie">📦 Arnie e componenti</option>
+            <option value="attrezzatura">🔧 Attrezzatura</option>
+            <option value="confezionamento">🫙 Confezionamento</option>
+            <option value="prodotto">🍯 Prodotti finiti</option>
+            <option value="altro">📋 Altro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Cerca articolo</label>
+          <input type="text" id="magSearch" placeholder="🔍 Filtra per nome..." oninput="populateMagArticoli()">
+        </div>
+        <div class="form-group">
+          <label>Articolo</label>
+          <select id="magArticolo" onchange="onArticoloChange()">
+            <option value="">— Seleziona articolo —</option>
+          </select>
+          <div id="giacenzaInfo" style="margin-top:0.4rem"></div>
+        </div>
+        <div class="form-group">
+          <label>Quantità <span id="magUnitaLabel" style="font-weight:400;text-transform:none;letter-spacing:0"></span></label>
+          <input type="number" id="magQta" inputmode="decimal" placeholder="Es. 10" min="0" step="0.1">
+        </div>
+
+        <!-- AVVISO USCITA con conferma -->
+        <div class="avviso-uscita" id="avvisoUscita">
+          <strong>⚠️ Scorta insufficiente</strong>
+          <span id="avvisoMsg"></span>
+          <div class="avviso-buttons">
+            <button class="btn-cancel-avviso" onclick="cancelAvviso()">Annulla</button>
+            <button class="btn-confirm-anyway" onclick="confirmSaveMag()">Salva comunque</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Data</label>
+          <input type="date" id="magData">
+        </div>
+        <div class="form-group">
+          <label>Note (opzionale)</label>
+          <input type="text" id="magNote" placeholder="Es. acquisto fiera, utilizzo apiario...">
+          <div id="magNoteSuggerimenti" style="margin-top:0.4rem;display:flex;flex-wrap:wrap;gap:0.3rem"></div>
+        </div>
+        <button class="btn-submit" id="btnSaveMag" onclick="saveMagazzinoWithValidation()">💾 Salva movimento</button>
+      </div>
+    </div>
+
+    <!-- VENDITA -->
+    <div class="section" id="tabVendita">
+      <h2 style="margin-top:0;color:var(--brown);font-family:'Playfair Display',serif">💰 Registra vendita</h2>
+      <p style="color:var(--text-light);font-size:0.85rem;margin-bottom:1rem">Scarica il prodotto dal magazzino e registra l'entrata in contabilità in un colpo solo.</p>
+      <div class="card-form">
+        <div class="form-group">
+          <label>Prodotto venduto</label>
+          <select id="vendIRArticolo" onchange="onVendIRArticoloChange()">
+            <option value="">— Seleziona prodotto —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:0.4rem"><input type="checkbox" id="vendIRLibera" onchange="onVendIRLiberaToggle()" style="width:auto;margin:0">Voce libera (non scala il magazzino)</label>
+          <input type="text" id="vendIRDescLibera" placeholder="Es. Vendita nuclei..." style="display:none;margin-top:0.4rem">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+          <div class="form-group">
+            <label>Quantità</label>
+            <input type="number" id="vendIRQuantita" min="0.01" step="0.01" placeholder="Es. 20" inputmode="decimal" oninput="updateVendIRTotale()">
+          </div>
+          <div class="form-group">
+            <label>Prezzo unitario (€)</label>
+            <input type="number" id="vendIRPrezzo" min="0" step="0.01" placeholder="Es. 7.00" inputmode="decimal" oninput="updateVendIRTotale()">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+          <div class="form-group">
+            <label>Data</label>
+            <input type="date" id="vendIRData">
+          </div>
+          <div class="form-group">
+            <label>Categoria</label>
+            <select id="vendIRCategoria">
+              <option value="vendita_miele">🍯 Vendita miele</option>
+              <option value="vendita_nuclei">🐝 Vendita nuclei/regine</option>
+              <option value="vendita_cera">🌿 Vendita cera/propoli</option>
+              <option value="altro_ricavo">💰 Altro ricavo</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Cliente / Note (opzionale)</label>
+          <input type="text" id="vendIRNote" placeholder="Es. cliente Rossi, mercato...">
+        </div>
+        <div style="background:rgba(200,134,10,0.1);border-radius:6px;padding:0.7rem 1rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:0.9rem;color:var(--brown)">Totale incasso</span>
+          <span id="vendIRTotale" style="font-size:1.3rem;font-weight:700;color:var(--brown)">€ 0,00</span>
+        </div>
+        <div id="vendIRWarn" style="display:none;font-size:0.82rem;color:var(--red);margin-bottom:0.8rem"></div>
+        <button class="btn-submit" onclick="salvaVenditaIR()">💰 Registra vendita</button>
+      </div>
+    </div>
+
+    <!-- NECESSITÀ (Da ordinare) -->
+    <div class="section" id="tabNecessita">
+      <h2 style="margin-top:0;color:var(--brown);font-family:'Playfair Display',serif">🛒 Da ordinare</h2>
+      <p style="color:var(--text-light);font-size:0.85rem;margin-bottom:1rem">Lista rapida degli articoli da acquistare. Spunta come ricevuto quando arriva.</p>
+
+      <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap">
+        <button class="btn-submit" style="flex:1;min-width:140px" onclick="openIRNecessitaForm()">+ Aggiungi</button>
+        <button class="btn-submit" style="flex:1;min-width:140px;background:var(--brown-light)" onclick="copiaListaNecessitaIR()">📋 Copia</button>
+      </div>
+
+      <!-- FORM RAPIDO INLINE -->
+      <div id="irNecForm" style="display:none;background:rgba(200,134,10,0.06);border:1px solid var(--cream-dark);border-radius:6px;padding:1rem;margin-bottom:1rem">
+        <input type="hidden" id="irNecEditId">
+
+        <!-- RIGHE ARTICOLI -->
+        <label style="font-weight:600;color:var(--brown);font-size:0.9rem">Articoli da ordinare</label>
+        <div id="irNecRighe" style="display:flex;flex-direction:column;gap:0.6rem;margin:0.4rem 0 0.6rem"></div>
+        <button type="button" id="irNecAddRigaBtn" onclick="aggiungiRigaIRNec()" class="btn-submit" style="background:var(--text-light);font-size:0.85rem;padding:0.4rem;margin-bottom:1rem">+ Aggiungi articolo</button>
+
+        <!-- CAMPI COMUNI -->
+        <div style="border-top:1px solid var(--cream-dark);padding-top:0.8rem">
+          <div style="font-size:0.8rem;color:var(--text-light);margin-bottom:0.6rem">📋 Dati comuni all'ordine</div>
+          <div class="form-group">
+            <label>Fornitore (opzionale)</label>
+            <div style="position:relative">
+              <input type="text" id="irNecFornitore" placeholder="Es. Apicoltura Nord" autocomplete="off" oninput="filtraFornitoriIR()" onfocus="filtraFornitoriIR()">
+              <div id="irNecFornitoreSuggest" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:white;border:1px solid var(--cream-dark);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.15);z-index:60;max-height:180px;overflow-y:auto"></div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+            <div class="form-group">
+              <label>Priorità</label>
+              <select id="irNecPriorita">
+                <option value="bassa">⚪ Bassa</option>
+                <option value="media" selected>🟡 Media</option>
+                <option value="alta">🟠 Alta</option>
+                <option value="urgente">🔴 Urgente</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Data prevista</label>
+              <input type="date" id="irNecDataPrevista">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Spedizione totale ordine (€)</label>
+            <input type="number" id="irNecSpedizione" min="0" step="0.01" placeholder="Es. 7.50">
+          </div>
+          <div class="form-group">
+            <label>Note</label>
+            <textarea id="irNecNote" rows="2" placeholder="Note libere..."></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.5rem">
+          <button class="btn-submit" style="flex:1;background:var(--text-light)" onclick="closeIRNecessitaForm()">Annulla</button>
+          <button class="btn-submit" style="flex:1" onclick="saveIRNecessita()">💾 Salva</button>
+        </div>
+      </div>
+      <datalist id="irNecUnitaList">
+        <option value="pz"><option value="kg"><option value="L"><option value="g"><option value="ml"><option value="confezione">
+      </datalist>
+
+      <!-- LISTA -->
+      <div id="irNecessitaList"></div>
+    </div>
+
+  </div><!-- /.content -->
+  </div><!-- /.ir-body-wrap -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="ir-bottom-nav">
+    <button class="ir-nav-btn active" id="navRiepilogo" onclick="showTab('riepilogo', this)">
+      <span class="ti">📊</span><span class="tl">Home</span>
+    </button>
+    <button class="ir-nav-btn" id="navContabilita" onclick="showTab('contabilita', this)">
+      <span class="ti">💰</span><span class="tl">Conti</span>
+    </button>
+    <button class="ir-nav-btn" id="navMagazzino" onclick="showTab('magazzino', this)">
+      <span class="ti">📦</span><span class="tl">Magazz.</span>
+    </button>
+    <button class="ir-nav-btn" id="navVendita" onclick="showTab('vendita', this)">
+      <span class="ti">🏷️</span><span class="tl">Vendita</span>
+    </button>
+    <button class="ir-nav-btn" id="navNecessita" onclick="showTab('necessita', this)">
+      <span class="ti">🛒</span><span class="tl">Ordini</span>
+    </button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== STATE =====
+let dbData   = { arnie: [], logBook: [] };
+let magData  = { articoli: [], movimentazioni: [] };
+let contData = { movimentiContabili: [] };
+let necData  = { necessita: [] };
+let settings = { fornitori: [] };
+let tipoContabile = 'entrata';
+let tipoMagazzino = 'entrata';
+let pendingMagMov = null;
+
+// ===== TOAST =====
+function showToast(msg, duration = 2800) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ===== HAPTIC FEEDBACK (mobile) =====
+function hapticSuccess() {
+  if(navigator.vibrate) navigator.vibrate([30, 50, 30]);
+}
+function hapticTap() {
+  if(navigator.vibrate) navigator.vibrate(15);
+}
+
+// ===== VALIDAZIONE REALTIME =====
+function validateContForm() {
+  const importo = parseFloat(document.getElementById('contImporto')?.value);
+  const desc    = document.getElementById('contDesc')?.value.trim();
+  const data    = document.getElementById('contData')?.value;
+  const cats    = [...document.querySelectorAll('#contCatChips input:checked')];
+  const valid = importo > 0 && desc && data && cats.length > 0;
+  const btn = document.getElementById('btnSaveCont');
+  if(btn) {
+    btn.disabled = !valid;
+    btn.style.opacity = valid ? '1' : '0.5';
+  }
+}
+
+function validateMagForm() {
+  const artId = document.getElementById('magArticolo')?.value;
+  const qta   = parseFloat(document.getElementById('magQta')?.value);
+  const data  = document.getElementById('magData')?.value;
+  const valid = artId && qta > 0 && data;
+  const btn = document.getElementById('btnSaveMag');
+  if(btn) {
+    btn.disabled = !valid;
+    btn.style.opacity = valid ? '1' : '0.5';
+  }
+}
+
+// ===== LOADING / LOGIN SCREEN =====
+function showLoadingScreen(msg) {
+  document.getElementById('driveLoginScreen').innerHTML = `
+    <div class="spinner"></div>
+    <h2 style="color:var(--brown)">${msg}</h2>
+    <p style="color:var(--text-light)">Connessione a Google Drive...</p>
+  `;
+}
+
+function showLoginScreen() {
+  document.getElementById('driveLoginScreen').innerHTML = `
+    <div class="bee">🐝</div>
+    <h2>Connetti Google Drive</h2>
+    <p>Accedi con il tuo account Google per sincronizzare i dati con l'apiario principale.</p>
+    <button class="btn-google" onclick="driveLogin()">
+      <svg width="18" height="18" viewBox="0 0 48 48">
+        <path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Accedi con Google
+    </button>
+  `;
+}
+
+// ===== DRIVE INIT =====
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    initDrive(
+      async () => {
+        showLoadingScreen('🔄 Caricamento dati...');
+        try {
+          const { db, mag, cont, nec, settings: s } = await Storage.carica();
+          if(db)   dbData   = db;
+          if(mag)  magData  = mag;
+          if(cont) contData = cont;
+          if(nec)  necData  = nec;
+          if(s)    settings  = s;
+          if(!settings.fornitori) settings.fornitori = [];
+        } catch(e) { console.error('[Inserimento rapido] Errore loadAll:', e); }
+        showApp();
+      },
+      () => showLoadingScreen('🔄 Caricamento dati...'),
+      () => showLoginScreen()
+    );
+  }, 600);
+});
+
+function showApp() {
+  document.getElementById('driveLoginScreen').style.display = 'none';
+  document.getElementById('appContent').style.display = 'block';
+  document.getElementById('driveDot').classList.add('connected');
+  document.getElementById('contData').value = today();
+  document.getElementById('magData').value  = today();
+  renderCatChips();
+  populateMagArticoli();
+  renderRiepilogo();
+  setupValidationListeners();
+  validateContForm();
+  validateMagForm();
+}
+
+function setupValidationListeners() {
+  // Contabilità
+  ['contImporto', 'contDesc', 'contData'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('input', validateContForm);
+  });
+  // Magazzino
+  ['magArticolo', 'magQta', 'magData'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) {
+      el.addEventListener('input', validateMagForm);
+      el.addEventListener('change', validateMagForm);
+    }
+  });
+}
+
+// ===== TABS =====
+function showTab(tab, btn) {
+  try {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.ir-nav-btn').forEach(b => b.classList.remove('active'));
+    const target = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+    if(!target) {
+      console.warn('[Inserimento rapido] Tab non trovato:', tab);
+      return;
+    }
+    target.classList.add('active');
+    // Evidenzia il pulsante nav corrispondente (sia se passato, sia per id)
+    if(btn) { btn.classList.add('active'); }
+    else { const nb = document.getElementById('nav' + tab.charAt(0).toUpperCase() + tab.slice(1)); if(nb) nb.classList.add('active'); }
+    // Scroll in cima all'area contenuti
+    const wrap = document.querySelector('.ir-body-wrap');
+    if(wrap) wrap.scrollTop = 0;
+    if(tab === 'riepilogo') renderRiepilogo();
+    if(tab === 'magazzino') populateMagArticoli();
+    if(tab === 'vendita') populateVendIRArticoli();
+    if(tab === 'necessita') renderIRNecessita();
+  } catch(err) {
+    console.error('[Inserimento rapido] Errore in showTab:', err.message);
+  }
+}
+
+// ===== NECESSITÀ (Da ordinare) — versione mobile compatta =====
+function escapeHtmlIR(s) {
+  if(!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function getIRNecessitaAttive() {
+  return (necData.necessita || []).filter(n => n.stato !== 'ricevuto');
+}
+
+// Etichetta priorità con pallino colorato (per la riga di stato)
+function priIconLabel(p) {
+  const map = {
+    urgente: '🔴 Urgente', alta: '🟠 Alta', media: '🟡 Media', bassa: '⚪ Bassa'
+  };
+  return map[p] || (p || '—');
+}
+
+function renderIRNecessita() {
+  try {
+    const container = document.getElementById('irNecessitaList');
+    if(!container) return;
+    const attive = getIRNecessitaAttive();
+    if(attive.length === 0) {
+      container.innerHTML = '<div style="background:rgba(0,0,0,0.03);border-radius:6px;padding:1.5rem;text-align:center;color:var(--text-light);font-style:italic;font-size:0.9rem">🛒 Nessun articolo in lista.<br><span style="font-size:0.85rem">Aggiungi voci da ordinare con il pulsante "+ Aggiungi"</span></div>';
+      return;
+    }
+
+    // Ordina per priorità (urgente > alta > media > bassa)
+    const ordinePrior = { urgente: 0, alta: 1, media: 2, bassa: 3 };
+    const ordinata = [...attive].sort((a,b) => (ordinePrior[a.priorita]||4) - (ordinePrior[b.priorita]||4));
+
+    const priColor = { urgente: '#C04B3B', alta: '#E89488', media: '#C8860A', bassa: '#9CA3AF' };
+    const statoIcon = { da_ordinare: '📝', ordinato: '🚚' };
+    const statoLabel = { da_ordinare: 'Da ordinare', ordinato: 'Ordinato' };
+
+    // Barra "Ricevi ordine" per fornitore — solo fornitori con voci ORDINATE
+    const perFornitore = {};
+    attive.forEach(n => {
+      if(n.fornitore && n.stato === 'ordinato') {
+        (perFornitore[n.fornitore] = perFornitore[n.fornitore] || []).push(n);
+      }
+    });
+    const fornitoriMulti = Object.keys(perFornitore).sort();
+    let barraFornitori = '';
+    if(fornitoriMulti.length > 0) {
+      barraFornitori = `<div style="margin-bottom:0.8rem;display:flex;flex-direction:column;gap:0.4rem">` +
+        fornitoriMulti.map(f => `
+          <button onclick="apriRicezioneFornitoreIR('${encodeURIComponent(f)}')" style="display:flex;justify-content:space-between;align-items:center;background:var(--amber-pale);border:1px solid var(--cream-dark);border-radius:6px;padding:0.5rem 0.8rem;cursor:pointer;font-family:inherit;font-size:0.85rem;color:var(--brown)">
+            <span>🏪 <strong>${escapeHtmlIR(f)}</strong> · ${perFornitore[f].length} ${perFornitore[f].length===1?'ordine':'ordini'} da ricevere</span>
+            <span style="background:var(--green);color:white;border-radius:4px;padding:0.15rem 0.5rem;font-size:0.75rem">📦 Ricevi</span>
+          </button>`).join('') +
+        `</div>`;
+    }
+
+    container.innerHTML = barraFornitori + ordinata.map(n => {
+      const art = n.articoloId ? (magData.articoli || []).find(a => a.id === n.articoloId) : null;
+      const desc = art ? art.nome : (n.descrizione || 'Articolo');
+      const unita = n.unita || (art && art.unita) || '';
+      const pColor = priColor[n.priorita] || '#C8860A';
+      const dataInfo = n.dataPrevista ? ` · 📅 ${formatDateIT(n.dataPrevista)}` : '';
+      const prezzo = parseFloat(n.prezzoStimato) || 0;
+      const qtaN = parseFloat(n.quantita) || 0;
+      const prezzoInfo = prezzo > 0
+        ? ` · 💰 € ${prezzo.toFixed(2)}${qtaN>0 ? ` (€ ${(prezzo/qtaN).toFixed(2)}/${escapeHtmlIR(unita)})` : ''}`
+        : '';
+      const spedInfo = (parseFloat(n.spedizione)||0) > 0 ? ` · 📮 € ${parseFloat(n.spedizione).toFixed(2)}` : '';
+
+      return `
+        <div style="background:white;border:1px solid var(--cream-dark);border-left:4px solid ${pColor};border-radius:6px;padding:0.7rem 0.85rem;margin-bottom:0.5rem;${n.stato==='ordinato'?'opacity:0.85':''}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;color:var(--brown);font-size:0.95rem;margin-bottom:0.2rem">
+                ${statoIcon[n.stato]||''} ${escapeHtmlIR(desc)}
+              </div>
+              <div style="font-size:0.85rem;color:var(--text);margin-bottom:0.15rem">
+                <strong>${n.quantita || '?'}</strong> ${escapeHtmlIR(unita)}${n.fornitore ? ' · 🏪 '+escapeHtmlIR(n.fornitore) : ''}${prezzoInfo}${spedInfo}
+              </div>
+              <div style="font-size:0.78rem;color:var(--text-light)">
+                ${statoLabel[n.stato]||n.stato} · ${priIconLabel(n.priorita)}${dataInfo}
+              </div>
+              ${n.note ? `<div style="font-size:0.78rem;color:var(--text-light);font-style:italic;margin-top:0.2rem">${escapeHtmlIR(n.note)}</div>` : ''}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.3rem">
+              ${n.stato === 'da_ordinare' ? `<button onclick="markIRNecOrdinata('${n.id}')" title="Ordinato" style="background:rgba(93,140,68,0.15);color:var(--green);border:1px solid var(--green);border-radius:4px;padding:0.25rem 0.5rem;cursor:pointer;font-size:0.75rem">🚚</button>` : ''}
+              <button onclick="markIRNecRicevuta('${n.id}')" title="Ricevuto" style="background:var(--green);color:white;border:none;border-radius:4px;padding:0.25rem 0.5rem;cursor:pointer;font-size:0.75rem">✅</button>
+              <button onclick="openIRNecessitaForm('${n.id}')" title="Modifica" style="background:rgba(200,134,10,0.15);color:var(--brown);border:1px solid var(--cream-dark);border-radius:4px;padding:0.25rem 0.5rem;cursor:pointer;font-size:0.75rem">✏️</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch(err) {
+    console.error('[Inserimento rapido] Errore in renderIRNecessita:', err.message);
+  }
+}
+
+function formatDateIT(d) {
+  if(!d) return '';
+  const parts = String(d).split('-');
+  if(parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  return d;
+}
+
+let _irNecRigheCount = 0;
+
+function buildRigaIRNec(idx, preset) {
+  preset = preset || {};
+  const arts = [...(magData.articoli || [])].sort((a,b) => a.nome.localeCompare(b.nome));
+  if(arts.length === 0) {
+    console.warn('[Inserimento rapido] Nessun articolo in magData al momento della riga necessità. Dati caricati?', magData);
+  }
+  const opts = '<option value="">— Articolo nuovo (scrivi sotto) —</option>' +
+    arts.map(a => `<option value="${a.id}" ${preset.articoloId===a.id?'selected':''}>${escapeHtmlIR(a.nome)}${a.unita?' ('+a.unita+')':''}</option>`).join('');
+  const div = document.createElement('div');
+  div.id = 'irNecRiga_' + idx;
+  div.className = 'ir-nec-riga';
+  div.style.cssText = 'border:1px solid var(--cream-dark);border-radius:6px;padding:0.6rem 0.7rem;position:relative;background:white';
+  div.innerHTML = `
+    <select id="irNecArt_${idx}" onchange="onIRNecRigaArticoloChange(${idx})" style="width:100%;margin-bottom:0.4rem">${opts}</select>
+    <input type="text" id="irNecDesc_${idx}" placeholder="…oppure articolo nuovo" value="${preset.descrizione?escapeHtmlIR(preset.descrizione):''}" style="width:100%;margin-bottom:0.4rem">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-bottom:0.4rem">
+      <div>
+        <label style="font-size:0.74rem;color:var(--text-light)">Quantità</label>
+        <input type="number" id="irNecQta_${idx}" min="0.01" step="0.01" placeholder="Es. 50" value="${preset.quantita||''}" inputmode="decimal">
+      </div>
+      <div>
+        <label style="font-size:0.74rem;color:var(--text-light)">Unità</label>
+        <input type="text" id="irNecUni_${idx}" placeholder="pz, kg…" value="${preset.unita?escapeHtmlIR(preset.unita):''}" list="irNecUnitaList">
+      </div>
+    </div>
+    <div>
+      <label style="font-size:0.74rem;color:var(--text-light)">Controvalore merce (€)</label>
+      <input type="number" id="irNecPrz_${idx}" min="0" step="0.01" placeholder="Es. 35.00" value="${preset.prezzoStimato||''}" inputmode="decimal">
+    </div>
+    <button type="button" onclick="rimuoviRigaIRNec(${idx})" title="Rimuovi" class="irNecRigaDel" style="position:absolute;top:0.4rem;right:0.4rem;background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;display:none">✕</button>
+  `;
+  return div;
+}
+
+function aggiungiRigaIRNec(preset) {
+  const cont = document.getElementById('irNecRighe');
+  if(!cont) return;
+  cont.appendChild(buildRigaIRNec(_irNecRigheCount++, preset));
+  aggiornaDelBtnIRNec();
+}
+
+function rimuoviRigaIRNec(idx) {
+  const r = document.getElementById('irNecRiga_' + idx);
+  if(r) r.remove();
+  aggiornaDelBtnIRNec();
+}
+
+function aggiornaDelBtnIRNec() {
+  const righe = document.getElementById('irNecRighe')?.querySelectorAll('[id^="irNecRiga_"]') || [];
+  righe.forEach(r => { const b = r.querySelector('.irNecRigaDel'); if(b) b.style.display = righe.length > 1 ? 'block' : 'none'; });
+}
+
+function onIRNecRigaArticoloChange(idx) {
+  const artId = document.getElementById('irNecArt_' + idx)?.value;
+  if(!artId) return;
+  const art = (magData.articoli || []).find(a => a.id === artId);
+  if(art) {
+    const uni = document.getElementById('irNecUni_' + idx);
+    if(uni && !uni.value) uni.value = art.unita || '';
+    const desc = document.getElementById('irNecDesc_' + idx);
+    if(desc) desc.value = '';
+  }
+}
+
+// Dropdown suggerimenti fornitori (mobile)
+function getTuttiFornitoriIR() {
+  const salvati = (settings && Array.isArray(settings.fornitori)) ? settings.fornitori : [];
+  const usati = (necData.necessita || []).map(n => n.fornitore).filter(Boolean);
+  return [...new Set([...salvati, ...usati])].sort((a,b) => a.localeCompare(b));
+}
+
+function filtraFornitoriIR() {
+  try {
+    const inp = document.getElementById('irNecFornitore');
+    const box = document.getElementById('irNecFornitoreSuggest');
+    if(!inp || !box) return;
+    const q = inp.value.trim().toLowerCase();
+    const tutti = getTuttiFornitoriIR();
+    const filtrati = q ? tutti.filter(f => f.toLowerCase().includes(q)) : tutti;
+    if(filtrati.length === 0) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    box.innerHTML = filtrati.map(f =>
+      `<div onmousedown="selezionaFornitoreIR('${encodeURIComponent(f)}')" ontouchstart="selezionaFornitoreIR('${encodeURIComponent(f)}')" style="padding:0.8rem 1rem;cursor:pointer;font-size:1rem;color:var(--text);border-bottom:1px solid var(--cream-light)">🏪 ${escapeHtmlIR(f)}</div>`
+    ).join('');
+    box.style.display = 'block';
+  } catch(err) {
+    console.error('[Inserimento rapido] Errore in filtraFornitoriIR:', err.message);
+  }
+}
+
+function selezionaFornitoreIR(fEnc) {
+  const f = decodeURIComponent(fEnc);
+  const inp = document.getElementById('irNecFornitore');
+  const box = document.getElementById('irNecFornitoreSuggest');
+  if(inp) inp.value = f;
+  if(box) { box.style.display = 'none'; box.innerHTML = ''; }
+}
+
+document.addEventListener('click', (e) => {
+  const box = document.getElementById('irNecFornitoreSuggest');
+  const inp = document.getElementById('irNecFornitore');
+  if(box && inp && e.target !== inp && !box.contains(e.target)) box.style.display = 'none';
+});
+
+function openIRNecessitaForm(id) {
+  try {
+    const form = document.getElementById('irNecForm');
+    if(!form) return;
+    form.style.display = 'block';
+
+    const cont = document.getElementById('irNecRighe');
+    if(cont) cont.innerHTML = '';
+    _irNecRigheCount = 0;
+    const addBtn = document.getElementById('irNecAddRigaBtn');
+    const suggBox = document.getElementById('irNecFornitoreSuggest');
+    if(suggBox) { suggBox.style.display = 'none'; suggBox.innerHTML = ''; }
+
+    if(id) {
+      const n = (necData.necessita || []).find(x => x.id === id);
+      if(!n) { console.warn('[Inserimento rapido] Necessità non trovata:', id); return; }
+      document.getElementById('irNecEditId').value = id;
+      aggiungiRigaIRNec({ articoloId: n.articoloId, descrizione: n.descrizione, quantita: n.quantita, unita: n.unita, prezzoStimato: n.prezzoStimato });
+      document.getElementById('irNecFornitore').value = n.fornitore || '';
+      document.getElementById('irNecPriorita').value = n.priorita || 'media';
+      document.getElementById('irNecDataPrevista').value = n.dataPrevista || '';
+      const spedEl = document.getElementById('irNecSpedizione');
+      if(spedEl) spedEl.value = n.spedizione || '';
+      document.getElementById('irNecNote').value = n.note || '';
+      if(addBtn) addBtn.style.display = 'none';
+    } else {
+      document.getElementById('irNecEditId').value = '';
+      aggiungiRigaIRNec();
+      document.getElementById('irNecFornitore').value = '';
+      document.getElementById('irNecPriorita').value = 'media';
+      document.getElementById('irNecDataPrevista').value = '';
+      const spedEl2 = document.getElementById('irNecSpedizione');
+      if(spedEl2) spedEl2.value = '';
+      document.getElementById('irNecNote').value = '';
+      if(addBtn) addBtn.style.display = '';
+    }
+    aggiornaDelBtnIRNec();
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch(err) {
+    console.error('[Inserimento rapido] Errore in openIRNecessitaForm:', err.message);
+  }
+}
+
+function closeIRNecessitaForm() {
+  const f = document.getElementById('irNecForm');
+  if(f) f.style.display = 'none';
+}
+
+function creaArticoloDaIRNec(descrizione, unita) {
+  const newArt = {
+    id: Date.now().toString() + Math.random().toString(36).slice(2),
+    nome: descrizione, categoria: 'altro', unita: unita || 'pz',
+    scadenza: '', lotto: '', soglia: '', prezzoUnitario: '', note: ''
+  };
+  if(!magData.articoli) magData.articoli = [];
+  magData.articoli.push(newArt);
+  console.log('[Inserimento rapido] Creato nuovo articolo:', newArt.nome);
+  return newArt;
+}
+
+async function saveIRNecessita() {
+  try {
+    const editId = document.getElementById('irNecEditId').value;
+    const fornitore = document.getElementById('irNecFornitore').value.trim();
+    const priorita = document.getElementById('irNecPriorita').value;
+    const dataPrevista = document.getElementById('irNecDataPrevista').value;
+    const spedizione = parseFloat(document.getElementById('irNecSpedizione')?.value) || null;
+    const note = document.getElementById('irNecNote').value.trim();
+
+    const righeEl = document.getElementById('irNecRighe').querySelectorAll('[id^="irNecRiga_"]');
+    const righe = [];
+    let errore = '';
+    righeEl.forEach(r => {
+      const idx = r.id.split('_')[1];
+      const articoloId = document.getElementById('irNecArt_' + idx)?.value || null;
+      const descrizione = document.getElementById('irNecDesc_' + idx)?.value.trim() || '';
+      const quantita = parseFloat(document.getElementById('irNecQta_' + idx)?.value);
+      const unita = document.getElementById('irNecUni_' + idx)?.value.trim() || '';
+      const prezzoStimato = parseFloat(document.getElementById('irNecPrz_' + idx)?.value) || null;
+      if(!articoloId && !descrizione && !quantita) return;
+      if(!articoloId && !descrizione) { errore = 'Ogni riga deve avere un articolo o una descrizione.'; return; }
+      if(!quantita || quantita <= 0) { errore = 'Ogni riga deve avere una quantità valida.'; return; }
+      righe.push({ articoloId, descrizione, quantita, unita, prezzoStimato });
+    });
+    if(errore) { alert(errore); return; }
+    if(righe.length === 0) { alert('Aggiungi almeno un articolo.'); return; }
+
+    if(!necData.necessita) necData.necessita = [];
+    const oggi = new Date().toISOString().slice(0,10);
+
+    if(editId) {
+      const r = righe[0];
+      const existing = necData.necessita.find(x => x.id === editId);
+      let finalArticoloId = r.articoloId, finalDescrizione = r.descrizione;
+      if(!r.articoloId && r.descrizione) { const a = creaArticoloDaIRNec(r.descrizione, r.unita); finalArticoloId = a.id; finalDescrizione = ''; }
+      const entry = {
+        id: editId, articoloId: finalArticoloId, descrizione: finalDescrizione,
+        quantita: r.quantita, unita: r.unita, fornitore, priorita, dataPrevista,
+        prezzoStimato: r.prezzoStimato, spedizione, note,
+        stato: existing?.stato || 'da_ordinare',
+        dataCreazione: existing?.dataCreazione || oggi,
+        dataOrdine: existing?.dataOrdine || null,
+      };
+      necData.necessita = necData.necessita.map(n => n.id === editId ? entry : n);
+    } else {
+      righe.forEach((r, i) => {
+        let finalArticoloId = r.articoloId, finalDescrizione = r.descrizione;
+        if(!r.articoloId && r.descrizione) { const a = creaArticoloDaIRNec(r.descrizione, r.unita); finalArticoloId = a.id; finalDescrizione = ''; }
+        necData.necessita.push({
+          id: Date.now().toString() + Math.random().toString(36).slice(2) + i,
+          articoloId: finalArticoloId, descrizione: finalDescrizione,
+          quantita: r.quantita, unita: r.unita, fornitore, priorita, dataPrevista,
+          prezzoStimato: r.prezzoStimato,
+          spedizione: i === 0 ? spedizione : null,
+          note, stato: 'da_ordinare', dataCreazione: oggi, dataOrdine: null,
+        });
+      });
+    }
+
+    await saveAllToCloudIR();
+    closeIRNecessitaForm();
+    renderIRNecessita();
+    showToastIR(!editId && righe.length > 1 ? `✅ ${righe.length} articoli aggiunti` : '✅ Voce salvata');
+  } catch(err) {
+    console.error('[Inserimento rapido] Errore in saveIRNecessita:', err.message);
+    alert('Errore nel salvataggio: ' + err.message);
+  }
+}
+
+async function markIRNecOrdinata(id) {
+  const n = (necData.necessita || []).find(x => x.id === id);
+  if(!n) return;
+  n.stato = 'ordinato';
+  n.dataOrdine = new Date().toISOString().slice(0,10);
+  await saveAllToCloudIR();
+  renderIRNecessita();
+  showToastIR('🚚 Segnato come ordinato');
+}
+
+async function markIRNecRicevuta(id) {
+  try {
+    const n = (necData.necessita || []).find(x => x.id === id);
+    if(!n) return;
+    const art = n.articoloId ? (magData.articoli || []).find(a => a.id === n.articoloId) : null;
+    const prezzoTot = parseFloat(n.prezzoStimato) || 0;
+    const spedizione = parseFloat(n.spedizione) || 0;
+    const qta = parseFloat(n.quantita) || 0;
+    const prezzoUnit = (prezzoTot > 0 && qta > 0) ? (prezzoTot / qta) : 0;
+    const dataOggi = new Date().toISOString().slice(0,10);
+
+    let msg = `Confermi di aver ricevuto:\n\n${art ? art.nome : n.descrizione}\nQuantità: ${n.quantita} ${n.unita || ''}`;
+    if(prezzoTot > 0) msg += `\nMerce: € ${prezzoTot.toFixed(2)}`;
+    if(spedizione > 0) msg += `\nSpedizione: € ${spedizione.toFixed(2)}`;
+    if(art) msg += `\n\n✅ Caricato a magazzino${prezzoUnit > 0 ? `\n💰 Prezzo unitario → € ${prezzoUnit.toFixed(2)}` : ''}`;
+    if(prezzoTot > 0 || spedizione > 0) msg += `\n📒 Spesa registrata in contabilità`;
+    if(!art && prezzoTot === 0 && spedizione === 0) msg += `\n\nLa voce verrà rimossa.`;
+    if(!confirm(msg)) return;
+
+    // Se articolo collegato → crea movimentazione di carico + aggiorna prezzo
+    if(art) {
+      if(!magData.movimentazioni) magData.movimentazioni = [];
+      magData.movimentazioni.push({
+        id: Date.now().toString() + Math.random().toString(36).slice(2),
+        articoloId: art.id,
+        tipo: 'entrata',
+        qta: qta,
+        data: dataOggi,
+        note: `Carico da ordine ricevuto${n.fornitore ? ' · '+n.fornitore : ''}${prezzoTot > 0 ? ' · € '+prezzoTot.toFixed(2) : ''}`,
+        valore: prezzoTot > 0 ? prezzoTot : undefined,
+      });
+      if(prezzoUnit > 0) {
+        magData.articoli = magData.articoli.map(a => a.id === art.id ? { ...a, prezzoUnitario: prezzoUnit.toFixed(4) } : a);
+      }
+    }
+
+    // ===== AUTO-SPESA IN CONTABILITÀ =====
+    const descrArticolo = art ? art.nome : (n.descrizione || 'Articolo');
+    let catSpesa = 'altro_costo';
+    if(art && typeof getCatSpesaPerMagazzino === 'function' && typeof normalizzaCatMagazzino === 'function') {
+      const c = getCatSpesaPerMagazzino(normalizzaCatMagazzino(art.categoria));
+      if(c) catSpesa = c;
+    }
+    if(!contData.movimentiContabili) contData.movimentiContabili = [];
+    if(prezzoTot > 0) {
+      contData.movimentiContabili.unshift({
+        id: Date.now().toString() + Math.random().toString(36).slice(2),
+        data: dataOggi, tipo: 'uscita', importo: prezzoTot,
+        categorie: [catSpesa],
+        descrizione: `${descrArticolo}${n.fornitore ? ' · '+n.fornitore : ''} (${qta} ${n.unita||''})`,
+        origine: 'ordine', origineId: id,
+      });
+    }
+    if(spedizione > 0) {
+      contData.movimentiContabili.unshift({
+        id: Date.now().toString() + Math.random().toString(36).slice(2) + 's',
+        data: dataOggi, tipo: 'uscita', importo: spedizione,
+        categorie: ['spedizioni'],
+        descrizione: `Spedizione ${descrArticolo}${n.fornitore ? ' · '+n.fornitore : ''}`,
+        origine: 'ordine', origineId: id,
+      });
+    }
+
+    // Rimuovi dalla lista
+    necData.necessita = necData.necessita.filter(x => x.id !== id);
+
+    await saveAllToCloudIR();
+    renderIRNecessita();
+    const parts = [];
+    if(art) parts.push('caricato');
+    if(prezzoTot > 0 || spedizione > 0) parts.push('spesa registrata');
+    showToastIR(`✅ ${descrArticolo}${parts.length?' · '+parts.join(' · '):''}`);
+  } catch(err) {
+    console.error('[Inserimento rapido] Errore in markIRNecRicevuta:', err.message);
+    alert('Errore: ' + err.message);
+  }
+}
+
+// ===== RICEZIONE ORDINE PER FORNITORE (IR) =====
+let _ricVociFornIR = [];
+let _ricFornIRCorrente = null;
+
+function apriRicezioneFornitoreIR(fornitoreEnc) {
+  try {
+    const fornitore = decodeURIComponent(fornitoreEnc);
+    _ricFornIRCorrente = fornitore;
+    // Solo le voci già ORDINATE di questo fornitore (non quelle ancora da ordinare)
+    _ricVociFornIR = getIRNecessitaAttive().filter(n => n.fornitore === fornitore && n.stato === 'ordinato');
+    if(_ricVociFornIR.length === 0) { alert('Nessun ordine da ricevere per questo fornitore.\n\nLe voci devono essere prima contrassegnate come "ordinate".'); return; }
+
+    const old = document.getElementById('ricFornIROverlay');
+    if(old) old.remove();
+
+    const righe = _ricVociFornIR.map((n, idx) => {
+      const art = n.articoloId ? (magData.articoli||[]).find(a => a.id === n.articoloId) : null;
+      const nome = art ? art.nome : (n.descrizione || 'Articolo');
+      const unita = n.unita || (art && art.unita) || '';
+      const prezzo = parseFloat(n.prezzoStimato) || '';
+      return `
+        <div style="border:1px solid var(--cream-dark);border-radius:6px;padding:0.6rem 0.7rem;margin-bottom:0.5rem">
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem">
+            <input type="checkbox" id="ricIRChk_${idx}" checked onchange="updateRicFornIRTotale()" style="width:auto;margin:0">
+            <label for="ricIRChk_${idx}" style="font-weight:600;color:var(--brown);font-size:0.88rem;flex:1">${escapeHtmlIR(nome)}</label>
+            <span style="font-size:0.74rem;color:var(--text-light)">ord: ${n.quantita} ${escapeHtmlIR(unita)}</span>
+          </div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:0.25rem">
+              <label style="font-size:0.76rem;color:var(--text-light)">Ricevuti</label>
+              <input type="number" id="ricIRQta_${idx}" value="${n.quantita}" min="0" step="0.01" style="width:70px" inputmode="decimal" oninput="updateRicFornIRTotale()">
+            </div>
+            <div style="display:flex;align-items:center;gap:0.25rem">
+              <label style="font-size:0.76rem;color:var(--text-light)">Merce €</label>
+              <input type="number" id="ricIRPrezzo_${idx}" value="${prezzo}" min="0" step="0.01" placeholder="0.00" style="width:80px" inputmode="decimal" oninput="updateRicFornIRTotale()">
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    const spedTot = _ricVociFornIR.reduce((s,n) => s + (parseFloat(n.spedizione)||0), 0);
+
+    const overlay = document.createElement('div');
+    overlay.id = 'ricFornIROverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,18,8,0.55);z-index:3000;display:flex;align-items:flex-end;justify-content:center';
+    overlay.innerHTML = `
+      <div style="background:white;border-radius:12px 12px 0 0;padding:1.2rem;width:100%;max-width:560px;max-height:88vh;overflow-y:auto">
+        <h3 style="margin:0 0 0.3rem;color:var(--brown);font-family:'Playfair Display',serif">📦 Ricevi ordine — ${escapeHtmlIR(fornitore)}</h3>
+        <p style="font-size:0.8rem;color:var(--text-light);margin:0 0 0.9rem">Correggi quantità e prezzi se il fornitore ha spedito diversamente. Le quantità mancanti tornano "da ordinare".</p>
+        ${righe}
+        <div style="display:flex;align-items:center;gap:0.5rem;background:var(--amber-pale);border-radius:6px;padding:0.6rem 0.8rem;margin:0.6rem 0">
+          <label style="font-size:0.85rem;color:var(--brown);flex:1">📮 Spedizione totale (€)</label>
+          <input type="number" id="ricIRSpedizione" min="0" step="0.01" value="${spedTot>0?spedTot.toFixed(2):''}" placeholder="0.00" style="width:90px" inputmode="decimal" oninput="updateRicFornIRTotale()">
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-top:1px solid var(--cream-dark)">
+          <span style="font-size:0.88rem">Totale ordine</span>
+          <span id="ricIRTotale" style="font-size:1.2rem;font-weight:700;color:var(--brown)">€ 0,00</span>
+        </div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.8rem">
+          <button onclick="document.getElementById('ricFornIROverlay').remove()" style="flex:1;padding:0.7rem;background:white;border:1.5px solid var(--cream-dark);border-radius:6px;font-weight:600;color:var(--text);cursor:pointer;font-family:inherit">Annulla</button>
+          <button onclick="confermaRicezioneFornitoreIR()" style="flex:1;padding:0.7rem;background:var(--green);border:none;border-radius:6px;font-weight:700;color:white;cursor:pointer;font-family:inherit">✅ Conferma</button>
+        </div>
+      </div>`;
+    overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+    updateRicFornIRTotale();
+  } catch(err) {
+    console.error('[Inserimento rapido] Errore in apriRicezioneFornitoreIR:', err.message);
+  }
+}
+
+function updateRicFornIRTotale() {
+  let merce = 0;
+  _ricVociFornIR.forEach((n, idx) => {
+    const chk = document.getElementById('ricIRChk_' + idx);
+    if(!chk || !chk.checked) return;
+    merce += parseFloat(document.getElementById('ricIRPrezzo_' + idx)?.value) || 0;
+  });
+  const sped = parseFloat(document.getElementById('ricIRSpedizione')?.value) || 0;
+  const el = document.getElementById('ricIRTotale');
+  if(el) el.textContent = '€ ' + (merce + sped).toFixed(2).replace('.', ',');
+}
+
+async function confermaRicezioneFornitoreIR() {
+  try {
+    const spedizione = parseFloat(document.getElementById('ricIRSpedizione')?.value) || 0;
+    const dataOggi = new Date().toISOString().slice(0,10);
+    const fornitore = _ricFornIRCorrente || '';
+    let ricevutiCount = 0;
+    const idDaRimuovere = [];
+
+    if(!magData.movimentazioni) magData.movimentazioni = [];
+    if(!contData.movimentiContabili) contData.movimentiContabili = [];
+
+    _ricVociFornIR.forEach((n, idx) => {
+      const chk = document.getElementById('ricIRChk_' + idx);
+      if(!chk || !chk.checked) return;
+      const qtaRic = parseFloat(document.getElementById('ricIRQta_' + idx)?.value) || 0;
+      const prezzoMerce = parseFloat(document.getElementById('ricIRPrezzo_' + idx)?.value) || 0;
+      if(qtaRic <= 0) return;
+      const qtaOrdinata = parseFloat(n.quantita) || 0;
+      const art = n.articoloId ? (magData.articoli||[]).find(a => a.id === n.articoloId) : null;
+      const prezzoUnit = (prezzoMerce > 0 && qtaRic > 0) ? (prezzoMerce / qtaRic) : 0;
+      const descr = art ? art.nome : (n.descrizione || 'Articolo');
+
+      if(art) {
+        magData.movimentazioni.push({
+          id: Date.now().toString() + Math.random().toString(36).slice(2),
+          articoloId: art.id, tipo: 'entrata', qta: qtaRic, data: dataOggi,
+          note: `Carico da ordine ricevuto${fornitore ? ' · '+fornitore : ''}${prezzoMerce > 0 ? ' · € '+prezzoMerce.toFixed(2) : ''}`,
+          valore: prezzoMerce > 0 ? prezzoMerce : undefined,
+        });
+        if(prezzoUnit > 0) magData.articoli = magData.articoli.map(a => a.id === art.id ? { ...a, prezzoUnitario: prezzoUnit.toFixed(4) } : a);
+      }
+      if(prezzoMerce > 0) {
+        let catSpesa = 'altro_costo';
+        if(art && typeof getCatSpesaPerMagazzino === 'function' && typeof normalizzaCatMagazzino === 'function') {
+          const c = getCatSpesaPerMagazzino(normalizzaCatMagazzino(art.categoria));
+          if(c) catSpesa = c;
+        }
+        contData.movimentiContabili.unshift({
+          id: Date.now().toString() + Math.random().toString(36).slice(2),
+          data: dataOggi, tipo: 'uscita', importo: prezzoMerce, categorie: [catSpesa],
+          descrizione: `${descr}${fornitore ? ' · '+fornitore : ''} (${qtaRic} ${n.unita||''})`,
+          origine: 'ordine', origineId: n.id,
+        });
+      }
+      ricevutiCount++;
+      const mancante = qtaOrdinata - qtaRic;
+      if(mancante > 0) {
+        n.quantita = mancante;
+        n.stato = 'da_ordinare';
+        n.prezzoStimato = prezzoUnit > 0 ? Number((prezzoUnit * mancante).toFixed(2)) : n.prezzoStimato;
+        n.spedizione = null;
+      } else {
+        idDaRimuovere.push(n.id);
+      }
+    });
+
+    if(ricevutiCount === 0) { alert('Nessun articolo selezionato.'); return; }
+
+    if(spedizione > 0) {
+      contData.movimentiContabili.unshift({
+        id: Date.now().toString() + Math.random().toString(36).slice(2) + 's',
+        data: dataOggi, tipo: 'uscita', importo: spedizione, categorie: ['spedizioni'],
+        descrizione: `Spedizione ordine${fornitore ? ' · '+fornitore : ''}`,
+        origine: 'ordine',
+      });
+    }
+
+    necData.necessita = necData.necessita.filter(n => !idDaRimuovere.includes(n.id));
+
+    // Salva tutti i file toccati
+    magData.savedAt = new Date().toISOString();
+    contData.savedAt = new Date().toISOString();
+    necData.savedAt = new Date().toISOString();
+    await Storage.salvaFile(FILENAME_MAG, magData);
+    await Storage.salvaFile(FILENAME_CONT, contData);
+    await Storage.salvaFile(FILENAME_NEC, necData);
+
+    const ov = document.getElementById('ricFornIROverlay');
+    if(ov) ov.remove();
+    renderIRNecessita();
+    showToastIR(`✅ Ordine ricevuto: ${ricevutiCount} articol${ricevutiCount>1?'i':'o'}${spedizione>0?' + spedizione':''}`);
+  } catch(err) {
+    console.error('[Inserimento rapido] Errore in confermaRicezioneFornitoreIR:', err.message);
+    alert('Errore: ' + err.message);
+  }
+}
+
+async function saveAllToCloudIR() {
+  try {
+    // Salva necessità, magazzino e contabilità (la ricezione ordini tocca tutti e tre)
+    necData.savedAt = new Date().toISOString();
+    await Storage.salvaFile(FILENAME_NEC, necData);
+    magData.savedAt = new Date().toISOString();
+    await Storage.salvaFile(FILENAME_MAG, magData);
+    contData.savedAt = new Date().toISOString();
+    await Storage.salvaFile(FILENAME_CONT, contData);
+  } catch(err) {
+    console.error('[Inserimento rapido] Errore salvataggio Drive:', err.message);
+    alert('Errore salvataggio su Drive: ' + err.message);
+  }
+}
+
+// ===== VENDITA RAPIDA (IR) =====
+function populateVendIRArticoli() {
+  const sel = document.getElementById('vendIRArticolo');
+  if(!sel) return;
+  const norm = (typeof normalizzaCatMagazzino === 'function') ? normalizzaCatMagazzino : (x=>x||'altro');
+  const arts = magData.articoli || [];
+  const prodotti = arts.filter(a => norm(a.categoria) === 'prodotto').sort((a,b)=>a.nome.localeCompare(b.nome));
+  const lista = prodotti.length > 0 ? prodotti : [...arts].sort((a,b)=>a.nome.localeCompare(b.nome));
+  sel.innerHTML = '<option value="">— Seleziona prodotto —</option>' +
+    lista.map(a => `<option value="${a.id}">${escapeHtmlIR(a.nome)} (${getGiacenza(a.id, magData.movimentazioni||[])} ${a.unita})</option>`).join('');
+  const dataEl = document.getElementById('vendIRData');
+  if(dataEl && !dataEl.value) dataEl.value = today();
+  updateVendIRTotale();
+}
+
+function onVendIRArticoloChange() {
+  const artId = document.getElementById('vendIRArticolo')?.value;
+  const art = (magData.articoli||[]).find(a => a.id === artId);
+  if(art) {
+    const nome = art.nome.toLowerCase();
+    const catSel = document.getElementById('vendIRCategoria');
+    if(catSel) {
+      if(nome.includes('cera') || nome.includes('propoli') || nome.includes('polline')) catSel.value = 'vendita_cera';
+      else if(nome.includes('nucleo') || nome.includes('regina') || nome.includes('sciame')) catSel.value = 'vendita_nuclei';
+      else catSel.value = 'vendita_miele';
+    }
+  }
+  updateVendIRTotale();
+}
+
+function onVendIRLiberaToggle() {
+  const libera = document.getElementById('vendIRLibera').checked;
+  document.getElementById('vendIRDescLibera').style.display = libera ? 'block' : 'none';
+  const sel = document.getElementById('vendIRArticolo');
+  if(sel) sel.disabled = libera;
+  updateVendIRTotale();
+}
+
+function updateVendIRTotale() {
+  const q = parseFloat(document.getElementById('vendIRQuantita')?.value) || 0;
+  const p = parseFloat(document.getElementById('vendIRPrezzo')?.value) || 0;
+  const tot = q * p;
+  const el = document.getElementById('vendIRTotale');
+  if(el) el.textContent = '€ ' + tot.toFixed(2).replace('.', ',');
+  const warn = document.getElementById('vendIRWarn');
+  const libera = document.getElementById('vendIRLibera')?.checked;
+  if(warn && !libera) {
+    const artId = document.getElementById('vendIRArticolo')?.value;
+    if(artId && q > 0) {
+      const giac = getGiacenza(artId, magData.movimentazioni||[]);
+      if(q > giac) { warn.style.display = 'block'; warn.textContent = `⚠️ Giacenza disponibile: ${giac}.`; }
+      else warn.style.display = 'none';
+    } else warn.style.display = 'none';
+  }
+}
+
+async function salvaVenditaIR() {
+  try {
+    const libera = document.getElementById('vendIRLibera').checked;
+    const artId = document.getElementById('vendIRArticolo').value;
+    const descLibera = document.getElementById('vendIRDescLibera').value.trim();
+    const q = parseFloat(document.getElementById('vendIRQuantita').value);
+    const p = parseFloat(document.getElementById('vendIRPrezzo').value);
+    const data = document.getElementById('vendIRData').value;
+    const categoria = document.getElementById('vendIRCategoria').value;
+    const note = document.getElementById('vendIRNote').value.trim();
+
+    if(!libera && !artId) { showToastIR('⚠️ Seleziona un prodotto o "Voce libera"'); return; }
+    if(libera && !descLibera) { showToastIR('⚠️ Inserisci la descrizione'); return; }
+    if(!q || q <= 0) { showToastIR('⚠️ Quantità non valida'); return; }
+    if(!p || p < 0) { showToastIR('⚠️ Prezzo non valido'); return; }
+    if(!data) { showToastIR('⚠️ Inserisci la data'); return; }
+
+    const totale = q * p;
+    const art = artId ? (magData.articoli||[]).find(a => a.id === artId) : null;
+    const descrizione = libera ? descLibera : (art ? art.nome : 'Vendita');
+
+    // Scarico magazzino
+    if(!libera && art) {
+      if(!magData.movimentazioni) magData.movimentazioni = [];
+      magData.movimentazioni.push({
+        id: Date.now().toString() + Math.random().toString(36).slice(2),
+        articoloId: art.id, tipo: 'uscita', qta: q, data,
+        note: `Vendita${note ? ' · '+note : ''}`, valore: totale,
+      });
+    }
+    // Entrata contabilità
+    if(!contData.movimentiContabili) contData.movimentiContabili = [];
+    contData.movimentiContabili.unshift({
+      id: Date.now().toString() + Math.random().toString(36).slice(2),
+      data, tipo: 'entrata', importo: totale, categorie: [categoria],
+      descrizione: `${descrizione} (${q}${art ? ' '+art.unita : ' pz'} × € ${p.toFixed(2)})${note ? ' · '+note : ''}`,
+      origine: 'vendita', origineArticoloId: art ? art.id : null,
+    });
+
+    // Salva su Drive
+    magData.savedAt = new Date().toISOString();
+    contData.savedAt = new Date().toISOString();
+    await Storage.salvaFile(FILENAME_MAG, magData);
+    await Storage.salvaFile(FILENAME_CONT, contData);
+
+    // Reset form
+    document.getElementById('vendIRQuantita').value = '';
+    document.getElementById('vendIRPrezzo').value = '';
+    document.getElementById('vendIRNote').value = '';
+    document.getElementById('vendIRDescLibera').value = '';
+    document.getElementById('vendIRLibera').checked = false;
+    onVendIRLiberaToggle();
+    populateVendIRArticoli();
+    updateVendIRTotale();
+    showToastIR(`💰 Vendita registrata: € ${totale.toFixed(2)}`);
+  } catch(err) {
+    console.error('[Inserimento rapido] Errore salvaVenditaIR:', err.message);
+    alert('Errore: ' + err.message);
+  }
+}
+
+function copiaListaNecessitaIR() {
+  try {
+    const attive = getIRNecessitaAttive();
+    if(attive.length === 0) {
+      alert('Nessuna voce in lista da copiare.');
+      return;
+    }
+
+    const priInfo = { urgente: { icon: '🔴', label: 'URGENTI' }, alta: { icon: '🟠', label: 'ALTA' }, media: { icon: '🟡', label: 'MEDIA' }, bassa: { icon: '⚪', label: 'BASSA' } };
+    const perPriorita = {};
+    attive.forEach(n => {
+      const k = n.priorita || 'media';
+      if(!perPriorita[k]) perPriorita[k] = [];
+      perPriorita[k].push(n);
+    });
+
+    let testo = `LISTA DA ORDINARE — ${new Date().toLocaleDateString('it-IT')}\n`;
+    testo += '═'.repeat(50) + '\n\n';
+
+    ['urgente','alta','media','bassa'].forEach(p => {
+      if(!perPriorita[p]) return;
+      testo += `${priInfo[p].icon} ${priInfo[p].label}:\n`;
+      perPriorita[p].forEach(n => {
+        const art = n.articoloId ? (magData.articoli || []).find(a => a.id === n.articoloId) : null;
+        const desc = art ? art.nome : (n.descrizione || 'Articolo');
+        const stato = n.stato === 'ordinato' ? ' [ORDINATO]' : '';
+        let linea = `  • ${n.quantita} ${n.unita || ''} — ${desc}${stato}`;
+        if(n.fornitore) linea += ` [${n.fornitore}]`;
+        if(n.dataPrevista) linea += ` entro ${formatDateIT(n.dataPrevista)}`;
+        if(n.note) linea += `\n    Note: ${n.note}`;
+        testo += linea + '\n';
+      });
+      testo += '\n';
+    });
+
+    const tot = attive.reduce((s,n) => s + (parseFloat(n.prezzoStimato) || 0), 0);
+    if(tot > 0) {
+      testo += '─'.repeat(50) + '\n';
+      testo += `TOTALE STIMATO: € ${tot.toFixed(2)}\n`;
+    }
+
+    if(navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(testo).then(() => {
+        showToastIR('📋 Lista copiata');
+      }).catch(() => {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = testo; ta.style.position='fixed'; ta.style.left='-9999px';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); showToastIR('📋 Lista copiata'); }
+        catch(e) { alert(testo); }
+        document.body.removeChild(ta);
+      });
+    }
+  } catch(err) {
+    console.error('[Inserimento rapido] Errore copia lista:', err.message);
+  }
+}
+
+function showToastIR(msg) {
+  let t = document.getElementById('toastIR');
+  if(!t) {
+    t = document.createElement('div');
+    t.id = 'toastIR';
+    t.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--brown);color:white;padding:0.7rem 1.3rem;border-radius:6px;font-size:0.9rem;z-index:9999;box-shadow:0 4px 14px rgba(0,0,0,0.3);transition:opacity 0.4s';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  setTimeout(() => { t.style.opacity = '0'; }, 2200);
+}
+
+// ===== RIEPILOGO (dashboard) =====
+function renderRiepilogo() {
+  const anno = new Date().getFullYear();
+  const mc  = contData.movimentiContabili || [];
+  const mv  = magData.movimentazioni || [];
+  const art = magData.articoli || [];
+
+  // Saldo del mese corrente
+  const meseCorr = new Date().toISOString().slice(0,7); // YYYY-MM
+  const entMese = mc.filter(m => m.tipo==='entrata' && m.data && m.data.startsWith(meseCorr)).reduce((s,m) => s + parseFloat(m.importo||0), 0);
+  const uscMese = mc.filter(m => m.tipo==='uscita' && m.data && m.data.startsWith(meseCorr)).reduce((s,m) => s + parseFloat(m.importo||0), 0);
+  const saldoMese = entMese - uscMese;
+
+  // Saldo anno
+  const entAnno = mc.filter(m => m.tipo==='entrata' && m.data && m.data.startsWith(anno)).reduce((s,m) => s + parseFloat(m.importo||0), 0);
+  const uscAnno = mc.filter(m => m.tipo==='uscita' && m.data && m.data.startsWith(anno)).reduce((s,m) => s + parseFloat(m.importo||0), 0);
+  const saldoAnno = entAnno - uscAnno;
+
+  const sottoSoglia = art.filter(a => a.soglia && getGiacenza(a.id, mv) <= parseFloat(a.soglia));
+  const nec = (necData.necessita || []);
+  const daOrdinare = nec.filter(n => n.stato === 'da_ordinare').length;
+  const daRicevere = nec.filter(n => n.stato === 'ordinato').length;
+
+  // Ultimi movimenti (compatti, top 4 misti)
+  const recent = [];
+  mc.forEach(m => recent.push({ when: m.data, icon: m.tipo==='entrata'?'💰':'💸',
+    desc: (m.descrizione||'—'), val: (m.tipo==='entrata'?'+':'−')+'€'+fmt(m.importo), cls: m.tipo==='entrata'?'green':'red', auto: !!m.origine }));
+  mv.forEach(m => { const a = art.find(x => x.id === m.articoloId);
+    recent.push({ when: m.data, icon: '📦', desc: a?.nome||'—', val: (m.tipo==='entrata'?'+':'−')+parseFloat(m.qta||0)+' '+(a?.unita||''), cls: m.tipo==='entrata'?'blue':'amber', auto: false }); });
+  recent.sort((a,b) => (b.when||'').localeCompare(a.when||''));
+  const recentTop = recent.slice(0, 5);
+
+  document.getElementById('riepilogoContent').innerHTML = `
+    <div class="ir-dash-title">📊 Colpo d'occhio</div>
+
+    <div class="ir-dash-card dc-saldo" onclick="showTab('contabilita')">
+      <span class="ico">💰</span>
+      <div class="txt">
+        <div class="big ${saldoMese>=0?'green':'red'}">${saldoMese>=0?'+':''}€${fmt(saldoMese)}</div>
+        <div class="lbl">Saldo del mese · anno ${saldoAnno>=0?'+':''}€${fmt(saldoAnno)}</div>
+      </div>
+      <span class="arrow">›</span>
+    </div>
+
+    <div class="ir-dash-card dc-soglia" onclick="showTab('magazzino')">
+      <span class="ico">📦</span>
+      <div class="txt">
+        <div class="big ${sottoSoglia.length>0?'red':''}">${sottoSoglia.length}</div>
+        <div class="lbl">${sottoSoglia.length===0 ? 'Scorte ok' : 'Sotto soglia: '+sottoSoglia.slice(0,3).map(a=>a.nome).join(', ')+(sottoSoglia.length>3?'…':'')}</div>
+      </div>
+      <span class="arrow">›</span>
+    </div>
+
+    <div class="ir-dash-card dc-ordini" onclick="showTab('necessita')">
+      <span class="ico">🛒</span>
+      <div class="txt">
+        <div class="big" style="color:#9A6B00">${daOrdinare + daRicevere}</div>
+        <div class="lbl">${daOrdinare} da ordinare${daRicevere>0?' · '+daRicevere+' in arrivo':''}</div>
+      </div>
+      <span class="arrow">›</span>
+    </div>
+
+    <div class="ir-dash-title" style="margin-top:1.2rem">⚡ Aggiungi al volo</div>
+    <div class="ir-quick-grid">
+      <button class="ir-quick" onclick="showTab('contabilita')"><span class="qi">💰</span><span class="ql">Spesa / Entrata</span></button>
+      <button class="ir-quick" onclick="showTab('magazzino')"><span class="qi">📦</span><span class="ql">Movimento</span></button>
+      <button class="ir-quick" onclick="showTab('vendita')"><span class="qi">🏷️</span><span class="ql">Vendita</span></button>
+      <button class="ir-quick" onclick="showTab('necessita')"><span class="qi">🛒</span><span class="ql">Ordine</span></button>
+    </div>
+
+    <div class="ir-dash-title" style="margin-top:1.2rem">🕘 Ultimi movimenti</div>
+    <div class="ir-recent">
+      ${recentTop.length === 0
+        ? '<div style="color:var(--text-light);font-style:italic;font-size:0.88rem;padding:0.6rem">Nessun movimento ancora.</div>'
+        : recentTop.map(m => `
+          <div class="ir-recent-item">
+            <span style="font-size:1.15rem">${m.icon}</span>
+            <div class="ir-recent-info">
+              <div class="ir-recent-desc">${m.desc}${m.auto?' <span style="font-size:0.62rem;background:rgba(55,138,221,0.12);color:#185FA5;padding:1px 5px;border-radius:7px;font-weight:600">🔗 auto</span>':''}</div>
+              <div class="ir-recent-date">${formatDate(m.when)}</div>
+            </div>
+            <span class="ir-recent-val ${m.cls}">${m.val}</span>
+          </div>`).join('')}
+    </div>
+  `;
+}
+
+// ===== CONTABILITÀ =====
+function setTipoCont(tipo) {
+  hapticTap();
+  tipoContabile = tipo;
+  document.getElementById('btnEntrata').className = 'tipo-toggle-btn' + (tipo==='entrata'?' active-entrata':'');
+  document.getElementById('btnUscita').className  = 'tipo-toggle-btn' + (tipo==='uscita'?' active-uscita':'');
+  renderCatChips();
+  validateContForm();
+}
+
+function renderCatChips() {
+  const cats = tipoContabile === 'entrata' ? CAT_ENTRATA : CAT_USCITA;
+  document.getElementById('contCatChips').innerHTML = cats.map(c =>
+    `<label class="chip"><input type="checkbox" value="${c.id}">${c.label}</label>`
+  ).join('');
+  document.querySelectorAll('#contCatChips .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('selected', chip.querySelector('input').checked);
+      validateContForm();
+    });
+  });
+}
+
+async function saveContabilita() {
+  const importo = document.getElementById('contImporto').value;
+  const desc    = document.getElementById('contDesc').value.trim();
+  const data    = document.getElementById('contData').value;
+  if(!importo || !desc || !data) { showToast('⚠️ Compila importo, descrizione e data'); return; }
+  const categorie = Array.from(document.querySelectorAll('#contCatChips input:checked')).map(x => x.value);
+  const mov = {
+    id: Date.now().toString(), data,
+    tipo: tipoContabile,
+    descrizione: desc,
+    importo: parseFloat(importo),
+    categorie,
+    note: document.getElementById('contNote').value.trim()
+  };
+  const btn = document.getElementById('btnSaveCont');
+  btn.disabled = true;
+  btn.textContent = '⏳ Salvataggio...';
+  try {
+    if(!contData.movimentiContabili) contData.movimentiContabili = [];
+    contData.movimentiContabili.unshift(mov);
+    contData.savedAt = new Date().toISOString();
+    await Storage.salvaFile(FILENAME_CONT, contData);
+    document.getElementById('formContSuccessMsg').textContent =
+      `${tipoContabile==='entrata'?'+':'−'}€${fmt(mov.importo)} — ${desc}`;
+    document.getElementById('formCont').style.display = 'none';
+    document.getElementById('formContSuccess').classList.add('show');
+    hapticSuccess();
+  } catch(e) {
+    showToast('❌ Errore: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 Salva movimento';
+  }
+}
+
+function resetFormCont() {
+  document.getElementById('formContSuccess').classList.remove('show');
+  document.getElementById('formCont').style.display = 'block';
+  document.getElementById('contImporto').value = '';
+  document.getElementById('contDesc').value = '';
+  document.getElementById('contNote').value = '';
+  document.getElementById('contData').value = today();
+  renderCatChips();
+  validateContForm();
+  document.getElementById('contImporto').focus();
+}
+
+// ===== MAGAZZINO =====
+const CAT_LABELS = {
+  farmaci:        '💊 Farmaci/sanitari',
+  alimentazione:  '🍬 Alimentazione',
+  telai_cera:     '🪵 Telai e cera',
+  arnie:          '📦 Arnie e componenti',
+  attrezzatura:   '🔧 Attrezzatura',
+  confezionamento:'🫙 Confezionamento',
+  prodotto:       '🍯 Prodotti finiti',
+  altro:          '📋 Altro',
+  // legacy
+  materiale:      '🔧 Attrezzatura',
+  consumabile:    '🍬 Alimentazione'
+};
+
+const NOTE_SUGGERIMENTI = {
+  entrata: ['Acquisto', 'Acquisto fiera', 'Regalo', 'Resi'],
+  uscita:  ['Utilizzo apiario', 'Trattamento', 'Vendita', 'Smaltito']
+};
+
+function populateMagArticoli() {
+  const sel  = document.getElementById('magArticolo');
+  const arts = magData.articoli || [];
+  const cat  = document.getElementById('magFiltroCat')?.value || '';
+  const search = (document.getElementById('magSearch')?.value || '').toLowerCase();
+  const cur = sel.value;
+
+  // Filtra (normalizza categorie legacy)
+  const norm = (typeof normalizzaCatMagazzino === 'function') ? normalizzaCatMagazzino : (x => x || 'altro');
+  const filtered = arts.filter(a =>
+    (!cat    || norm(a.categoria) === cat) &&
+    (!search || a.nome.toLowerCase().includes(search))
+  );
+
+  // Raggruppa per categoria
+  const groups = {};
+  filtered.forEach(a => {
+    const c = norm(a.categoria);
+    if(!groups[c]) groups[c] = [];
+    groups[c].push(a);
+  });
+
+  // Costruisci optgroup
+  let html = '<option value="">— Seleziona articolo —</option>';
+  Object.keys(groups).sort().forEach(c => {
+    html += `<optgroup label="${CAT_LABELS[c] || c}">`;
+    groups[c]
+      .sort((a,b) => a.nome.localeCompare(b.nome))
+      .forEach(a => {
+        html += `<option value="${a.id}" data-unita="${a.unita}" data-cat="${a.categoria}">${a.nome} (${a.unita})</option>`;
+      });
+    html += '</optgroup>';
+  });
+  sel.innerHTML = html;
+
+  // Mantieni la selezione corrente se ancora valida
+  if(cur && [...sel.options].some(o => o.value === cur)) {
+    sel.value = cur;
+  } else {
+    document.getElementById('giacenzaInfo').innerHTML = '';
+    document.getElementById('avvisoUscita').classList.remove('show');
+  }
+
+  if(filtered.length === 0 && (cat || search)) {
+    sel.innerHTML = '<option value="">— Nessun articolo trovato —</option>';
+  }
+
+  renderNoteSuggerimenti();
+}
+
+function renderNoteSuggerimenti() {
+  const sugg = NOTE_SUGGERIMENTI[tipoMagazzino] || [];
+  document.getElementById('magNoteSuggerimenti').innerHTML = sugg.map(s =>
+    `<button type="button" onclick="document.getElementById('magNote').value = '${s}'" style="padding:0.3rem 0.7rem;border:1px solid var(--cream-dark);border-radius:14px;background:white;font-size:0.78rem;color:var(--text-light);cursor:pointer;font-family:inherit">${s}</button>`
+  ).join('');
+}
+
+function setTipoMag(tipo) {
+  hapticTap();
+  tipoMagazzino = tipo;
+  document.getElementById('btnMagIn').className  = 'tipo-toggle-btn' + (tipo==='entrata'?' active-entrata':'');
+  document.getElementById('btnMagOut').className = 'tipo-toggle-btn' + (tipo==='uscita'?' active-uscita':'');
+  document.getElementById('avvisoUscita').classList.remove('show');
+  renderNoteSuggerimenti();
+  onArticoloChange();
+  validateMagForm();
+}
+
+function onArticoloChange() {
+  const sel   = document.getElementById('magArticolo');
+  const artId = sel.value;
+  const opt   = sel.options[sel.selectedIndex];
+  const unita = opt?.dataset?.unita || '';
+  document.getElementById('magUnitaLabel').textContent = unita ? `(${unita})` : '';
+  document.getElementById('avvisoUscita').classList.remove('show');
+  validateMagForm();
+  if(!artId) { document.getElementById('giacenzaInfo').innerHTML = ''; return; }
+
+  const giac = getGiacenza(artId, magData.movimentazioni || []);
+  const art  = (magData.articoli||[]).find(a => a.id === artId);
+  const soglia = parseFloat(art?.soglia || 0);
+
+  // Calcola stato e percentuale
+  let stato, color, bgColor, label, pct;
+  if(giac === 0) {
+    stato = 'empty'; color = '#c62828'; bgColor = '#fce8e8';
+    label = '⚠ Esaurito'; pct = 0;
+  } else if(soglia > 0 && giac <= soglia) {
+    stato = 'warn'; color = '#e65100'; bgColor = '#fff3e0';
+    label = '⚠ Sotto soglia'; pct = (giac / Math.max(soglia * 2, giac)) * 100;
+  } else {
+    stato = 'ok'; color = '#2E7D32'; bgColor = '#e8f5e9';
+    label = '✓ Disponibile';
+    pct = soglia > 0 ? Math.min((giac / (soglia * 3)) * 100, 100) : 100;
+  }
+  const giacFmt = giac % 1 === 0 ? giac : giac.toFixed(1);
+  const sogliaTxt = soglia > 0 ? ` · soglia ${soglia} ${unita}` : '';
+
+  document.getElementById('giacenzaInfo').innerHTML = `
+    <div style="background:${bgColor};border-radius:8px;padding:0.55rem 0.8rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem;font-size:0.82rem">
+        <span style="color:${color};font-weight:600">${label}</span>
+        <span style="color:${color};font-weight:700">${giacFmt} ${unita}</span>
+      </div>
+      <div style="height:6px;background:rgba(0,0,0,0.08);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width 0.3s"></div>
+      </div>
+      <div style="font-size:0.72rem;color:${color};opacity:0.75;margin-top:0.25rem">Giacenza attuale${sogliaTxt}</div>
+    </div>`;
+}
+
+function saveMagazzinoWithValidation() {
+  const artId = document.getElementById('magArticolo').value;
+  const qta   = parseFloat(document.getElementById('magQta').value);
+  const data  = document.getElementById('magData').value;
+  if(!artId || !qta || !data) { showToast('⚠️ Seleziona articolo, quantità e data'); return; }
+
+  // Validazione scarico: avviso con conferma (opzione B)
+  if(tipoMagazzino === 'uscita') {
+    const giac = getGiacenza(artId, magData.movimentazioni || []);
+    if(qta > giac) {
+      const art   = (magData.articoli||[]).find(a => a.id === artId);
+      const unita = art?.unita || '';
+      const giacFmt = giac % 1 === 0 ? giac : giac.toFixed(1);
+      document.getElementById('avvisoMsg').textContent =
+        ` Stai scaricando ${qta} ${unita} ma la giacenza è di ${giacFmt} ${unita}. Continuare metterà la giacenza in negativo.`;
+      document.getElementById('avvisoUscita').classList.add('show');
+      pendingMagMov = { artId, qta, data };
+      return;
+    }
+  }
+  doSaveMag();
+}
+
+function cancelAvviso() {
+  document.getElementById('avvisoUscita').classList.remove('show');
+  pendingMagMov = null;
+}
+
+function confirmSaveMag() {
+  document.getElementById('avvisoUscita').classList.remove('show');
+  doSaveMag();
+}
+
+async function doSaveMag() {
+  const artId = document.getElementById('magArticolo').value;
+  const qta   = parseFloat(document.getElementById('magQta').value);
+  const data  = document.getElementById('magData').value;
+  const art   = (magData.articoli||[]).find(a => a.id === artId);
+  const mov = {
+    id: Date.now().toString(), data,
+    articoloId: artId,
+    tipo: tipoMagazzino,
+    qta,
+    note: document.getElementById('magNote').value.trim()
+  };
+  const btn = document.getElementById('btnSaveMag');
+  btn.disabled = true;
+  btn.textContent = '⏳ Salvataggio...';
+  try {
+    if(!magData.movimentazioni) magData.movimentazioni = [];
+    magData.movimentazioni.push(mov);
+    magData.savedAt = new Date().toISOString();
+    await Storage.salvaFile(FILENAME_MAG, magData);
+    document.getElementById('formMagSuccessMsg').textContent =
+      `${tipoMagazzino==='entrata'?'+':'−'}${qta} ${art?.unita||''} di ${art?.nome||'—'}`;
+    document.getElementById('formMag').style.display = 'none';
+    document.getElementById('formMagSuccess').classList.add('show');
+    hapticSuccess();
+    pendingMagMov = null;
+  } catch(e) {
+    showToast('❌ Errore: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 Salva movimento';
+  }
+}
+
+function resetFormMag() {
+  document.getElementById('formMagSuccess').classList.remove('show');
+  document.getElementById('formMag').style.display = 'block';
+  document.getElementById('magQta').value = '';
+  document.getElementById('magNote').value = '';
+  document.getElementById('magData').value = today();
+  document.getElementById('magFiltroCat').value = '';
+  document.getElementById('magSearch').value = '';
+  populateMagArticoli();
+  document.getElementById('magArticolo').value = '';
+  document.getElementById('magUnitaLabel').textContent = '';
+  document.getElementById('giacenzaInfo').innerHTML = '';
+  document.getElementById('avvisoUscita').classList.remove('show');
+  pendingMagMov = null;
+  validateMagForm();
+}
+</script>
+</body>
+</html>
