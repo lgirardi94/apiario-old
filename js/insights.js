@@ -1,4 +1,4 @@
-// ===== FILE VERSION: 2026-05-28.8 · insights.js =====
+// ===== FILE VERSION: 2026-05-28.9 · insights.js =====
 /* ===========================================================
    INSIGHTS / ANALISI — costo miele, simulatore prezzo,
    heatmap produzione, genealogia regine, report narrativo
@@ -272,13 +272,115 @@ function renderGenealogia(anno) {
   try {
     const container = document.getElementById('analisiGenealogia');
     if(!container) return;
-    container.innerHTML = buildGenealogiaTree(arnie, logBook, { idPrefix: 'genIns' });
-    // disegna le linee dopo che il layout è stabile
-    setTimeout(() => drawGenealogiaTree('genIns'), 80);
+    container.innerHTML = buildGenealogiaMinimale(arnie, logBook);
   } catch(err) {
     console.error('[Insights] Errore in renderGenealogia:', err.message);
     const c = document.getElementById('analisiGenealogia');
     if(c) c.innerHTML = `<div style="color:var(--text-light);font-style:italic;padding:1rem">Impossibile mostrare la genealogia.</div>`;
+  }
+}
+
+// === Vista MINIMALE della genealogia (per il riquadro Insights, stretto) ===
+// Albero per indentazione: leggero, niente canvas/linee SVG, sta in qualsiasi larghezza.
+// La vista completa a grafo è disponibile nella modale "Apri ingrandito".
+function buildGenealogiaMinimale(arnieInput, logBookInput) {
+  try {
+    const arnieAll = (arnieInput || []).filter(a => !a.annoDismissione);
+    if (arnieAll.length === 0) {
+      return `<div style="text-align:center;color:var(--text-light);font-style:italic;padding:1rem">Nessuna arnia attiva da mostrare.</div>`;
+    }
+
+    const prodArnia = {};
+    (logBookInput || []).forEach(e => {
+      const kg = (e.raccolta || []).reduce((s, r) => s + (parseFloat(r.qta) || 0), 0);
+      prodArnia[e.arniaId] = (prodArnia[e.arniaId] || 0) + kg;
+    });
+
+    const byId = {};
+    arnieAll.forEach(a => { byId[a.id] = a; });
+    const nomeArnia = (id) => { const a = byId[id]; return a ? '#' + a.num + (a.nome ? ' ' + a.nome : '') : '?'; };
+    const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // relazioni
+    const madreReginaDi = {};
+    arnieAll.forEach(a => {
+      if (a.reginaOrigine === 'inserita' && a.reginaArniaSrc && byId[a.reginaArniaSrc]) madreReginaDi[a.id] = a.reginaArniaSrc;
+    });
+    const telaiDi = {};
+    arnieAll.forEach(a => {
+      const counts = {};
+      (a.telainiOrigine || []).forEach(t => {
+        if (t.arniaSrcId && t.arniaSrcId !== a.id && byId[t.arniaSrcId]) counts[t.arniaSrcId] = (counts[t.arniaSrcId] || 0) + 1;
+      });
+      const list = Object.keys(counts).map(src => ({ srcId: src, count: counts[src] }));
+      if (list.length) telaiDi[a.id] = list;
+    });
+
+    // figlie-da-regina per costruire l'albero annidato
+    const figlieRegina = {};
+    Object.keys(madreReginaDi).forEach(figliaId => {
+      const mid = madreReginaDi[figliaId];
+      (figlieRegina[mid] = figlieRegina[mid] || []).push(figliaId);
+    });
+
+    const origineInfo = {
+      allevata:   { icon: '🥚', col: '#639922' },
+      inserita:   { icon: '👑', col: '#BA7517' },
+      acquistata: { icon: '🛒', col: '#4A6FA5' },
+    };
+
+    const pallino = (anno) => {
+      if (!anno) return '';
+      try { return (typeof getReginaPallino === 'function' ? getReginaPallino(anno, 8) : '') + ' '; }
+      catch (e) { return ''; }
+    };
+
+    // riga singola arnia (con rientro = livello)
+    const renderRiga = (a, liv) => {
+      const oi = origineInfo[a.reginaOrigine] || origineInfo.allevata;
+      const reg = a.reginaAnno ? (pallino(a.reginaAnno) + a.reginaAnno) : '';
+      const kg = prodArnia[a.id] || 0;
+      const kgTxt = kg > 0 ? ` · <span style="color:${kg>=15?'#27500A':(kg>=8?'#7a4a08':'var(--text-light)')};font-weight:600">${kg.toFixed(0)}kg</span>` : '';
+      // provenienze in testo
+      const prov = [];
+      if (madreReginaDi[a.id]) prov.push(`👑 regina da ${esc(nomeArnia(madreReginaDi[a.id]))}`);
+      (telaiDi[a.id] || []).forEach(t => prov.push(`🪵 ${t.count} ${t.count>1?'telaini':'telaino'} da ${esc(nomeArnia(t.srcId))}`));
+      const provTxt = prov.length ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:0.1rem">${prov.join(' · ')}</div>` : '';
+      return `
+        <div style="margin-left:${liv*1.3}rem;margin-bottom:0.45rem;padding-left:0.6rem;border-left:3px solid ${oi.col}">
+          <div style="font-size:0.9rem;color:var(--brown)"><span>${oi.icon}</span> <strong>#${esc(a.num)}</strong>${a.nome?' '+esc(a.nome):''}${reg?` <span style="color:var(--text-light);font-weight:400">· ${reg}</span>`:''}${kgTxt}</div>
+          ${provTxt}
+        </div>`;
+    };
+
+    // albero annidato: parto dalle radici (chi non ha madre-regina), scendo nelle figlie-da-regina
+    const visited = new Set();
+    const renderNodo = (id, liv) => {
+      if (visited.has(id)) return '';
+      visited.add(id);
+      let h = renderRiga(byId[id], liv);
+      (figlieRegina[id] || [])
+        .sort((x, y) => (prodArnia[y] || 0) - (prodArnia[x] || 0))
+        .forEach(fid => { h += renderNodo(fid, liv + 1); });
+      return h;
+    };
+
+    const radici = arnieAll.filter(a => !madreReginaDi[a.id]).sort((a, b) => (prodArnia[b.id] || 0) - (prodArnia[a.id] || 0));
+    let html = '';
+    radici.forEach(r => { html += renderNodo(r.id, 0); });
+    // eventuali rimaste (cicli) in fondo
+    arnieAll.forEach(a => { if (!visited.has(a.id)) html += renderRiga(a, 0); });
+
+    const legenda = `<div style="display:flex;flex-wrap:wrap;gap:0.7rem;margin-bottom:0.8rem;font-size:0.74rem;color:var(--text-light)">
+      <span>🥚 allevata</span><span>👑 inserita</span><span>🛒 acquistata</span><span>🪵 telai ricevuti</span>
+    </div>`;
+
+    const nota = `<div style="margin-top:0.8rem;font-size:0.76rem;color:var(--text-light);font-style:italic">Vista compatta · usa "🔍 Apri ingrandito" per l'albero completo con le linee di parentela.</div>`;
+
+    return legenda + html + nota;
+  } catch (err) {
+    console.error('[Genealogia] Errore vista minimale:', err.message);
+    return `<div style="color:var(--text-light);font-style:italic;padding:1rem">Impossibile mostrare la genealogia.</div>`;
   }
 }
 
