@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<!-- FILE VERSION: 2026-06-04.1 · verifica-email.html -->
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verifica email · Il Mio Apiario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Spline+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="js/auth.js?v=20260604d"></script>
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    font-family:'Spline Sans',system-ui,sans-serif; color:#3A2E1A; min-height:100vh;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+    background:
+      radial-gradient(circle at 18% 12%, rgba(232,163,23,.10), transparent 42%),
+      radial-gradient(circle at 86% 88%, rgba(200,132,26,.10), transparent 46%),
+      linear-gradient(160deg, #FBF4E6 0%, #F5E9D0 100%);
+  }
+  .card{
+    background:#FFFDF8; border:1px solid #E6D6B3; border-radius:24px;
+    box-shadow:0 10px 40px -12px rgba(139,94,20,.28);
+    padding:40px 30px 32px; max-width:440px; width:100%; text-align:center; position:relative; overflow:hidden;
+  }
+  .card::after{ content:""; position:absolute; top:0; left:0; right:0; height:5px; background:linear-gradient(90deg,#E8A317,#8B5E14); }
+  .logo{
+    width:60px; height:60px; margin:0 auto 14px; display:flex; align-items:center; justify-content:center; font-size:32px;
+    background:radial-gradient(circle at 35% 30%,#FFD466,#E8A317 70%); border-radius:18px;
+    box-shadow:0 4px 16px -6px rgba(139,94,20,.22), inset 0 -3px 8px rgba(139,94,20,.25); transform:rotate(-4deg);
+  }
+  h1{ font-family:'Fraunces',Georgia,serif; font-weight:600; font-size:23px; color:#8B5E14; margin-bottom:6px; }
+  .ico{ font-size:44px; margin:10px 0 6px; }
+  .titolo{ font-family:'Fraunces',Georgia,serif; font-size:19px; font-weight:600; margin-bottom:8px; }
+  .msg{ color:#7A6A4F; font-size:14.5px; line-height:1.55; margin-bottom:22px; }
+  .btn{
+    display:inline-block; width:100%; padding:13px; border:none; border-radius:12px; font-size:15px; font-weight:600;
+    font-family:inherit; cursor:pointer; text-decoration:none; color:#fff;
+    background:linear-gradient(135deg,#E8A317,#C8841A); box-shadow:0 4px 16px -6px rgba(139,94,20,.22);
+  }
+  .btn:hover{ filter:brightness(1.04); }
+  .btn-ghost{ background:transparent; color:#8B5E14; border:1.5px solid #E6D6B3; box-shadow:none; margin-top:10px; }
+  .spinner{ width:34px; height:34px; border:3px solid #EADFC4; border-top-color:#E8A317; border-radius:50%; margin:14px auto; animation:spin .8s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">🐝</div>
+    <h1>Il Mio Apiario</h1>
+    <div id="contenuto">
+      <div class="spinner"></div>
+      <div class="msg">Verifica in corso...</div>
+    </div>
+  </div>
+
+<script>
+  (function () {
+    'use strict';
+    function el(id){ return document.getElementById(id); }
+    function vista(html){ const c = el('contenuto'); if(c) c.innerHTML = html; }
+
+    function leggiToken() {
+      try { return new URLSearchParams(window.location.search).get('token'); }
+      catch (e) { return null; }
+    }
+
+    function successo() {
+      vista(`
+        <div class="ico">✅</div>
+        <div class="titolo">Email verificata!</div>
+        <div class="msg">Il tuo indirizzo è stato confermato. Ora puoi usare tutte le funzioni dell'app.</div>
+        <a class="btn" href="index.html">Vai all'app</a>
+      `);
+    }
+    function errore(messaggio) {
+      vista(`
+        <div class="ico">⚠️</div>
+        <div class="titolo">Verifica non riuscita</div>
+        <div class="msg">${messaggio || 'Il link è scaduto o non valido.'}</div>
+        <a class="btn" href="index.html">Vai all'app</a>
+        <a class="btn btn-ghost" href="index.html">Accedi e richiedi un nuovo link</a>
+      `);
+    }
+
+    async function avvia() {
+      const token = leggiToken();
+      if (!token) { errore('Link non valido: manca il codice di verifica.'); return; }
+      if (typeof Auth === 'undefined' || !Auth.verifyEmail) {
+        errore('Si è verificato un problema tecnico. Riprova più tardi.'); return;
+      }
+      try {
+        await Auth.verifyEmail(token);
+        successo();
+      } catch (e) {
+        console.error('[Verifica email] Errore:', e.message);
+        errore(Auth.messaggioErrore ? Auth.messaggioErrore(e) : 'Il link è scaduto o non valido.');
+      }
+    }
+
+    window.addEventListener('load', avvia);
+  })();
+</script>
+</body>
+</html>

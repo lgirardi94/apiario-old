@@ -1,4 +1,4 @@
-// ===== FILE VERSION: 2026-06-04.1 · auth-ui.js =====
+// ===== FILE VERSION: 2026-06-04.2 · auth-ui.js =====
 //
 // INTERFACCIA AUTENTICAZIONE (schermate + gate di avvio)
 // ======================================================
@@ -223,10 +223,7 @@
     bindEye();
     on('auBackToChoice', 'click', mostraScelta);
     on('auGoRegister', 'click', mostraRegistrazione);
-    on('auGoForgot', 'click', function () {
-      // Recupero password: schermata della Fase 3. Per ora avviso gentile.
-      mostraInfoTemporanea('Il recupero password sarà disponibile a breve.');
-    });
+    on('auGoForgot', 'click', mostraForgot);
     on('auLoginBtn', 'click', eseguiLogin);
     // invio con Enter
     enterSubmits(['auLoginEmail', 'auLoginPwd'], eseguiLogin);
@@ -248,6 +245,52 @@
       showErr('auLoginErr', Auth.messaggioErrore(e));
       setBtnNormal(btn, 'Accedi');
     }
+  }
+
+  // ============================================================
+  // SCHERMATA: password dimenticata
+  // ============================================================
+  function mostraForgot() {
+    setCard(`
+      ${brand()}
+      <button class="au-back" id="auBackFromForgot">← Torna al login</button>
+      <div class="au-title">Recupera la password</div>
+      <div class="au-sub">Inserisci la tua email. Se è registrata, riceverai un link per reimpostare la password.</div>
+      <div class="au-err" id="auForgotErr"></div>
+      <div class="au-field">
+        <label for="auForgotEmail">Email</label>
+        <input type="email" id="auForgotEmail" autocomplete="email" placeholder="nome@esempio.it">
+      </div>
+      <button class="au-btn au-btn-primary" id="auForgotBtn">Invia link di recupero</button>
+    `);
+    mostraOverlay();
+    on('auBackFromForgot', 'click', mostraLogin);
+    on('auForgotBtn', 'click', eseguiForgot);
+    enterSubmits(['auForgotEmail'], eseguiForgot);
+  }
+
+  async function eseguiForgot() {
+    const email = val('auForgotEmail').trim();
+    hideErr('auForgotErr');
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      showErr('auForgotErr', 'Inserisci un indirizzo email valido.'); return;
+    }
+    const btn = document.getElementById('auForgotBtn');
+    setBtnLoading(btn, '⏳ Invio...');
+    try {
+      await Auth.forgotPassword(email);
+    } catch (e) {
+      // La risposta è comunque neutra: non riveliamo se l'email esiste.
+      console.error('[AuthUI] forgotPassword:', e.message);
+    }
+    setCard(`
+      ${brand()}
+      <div style="text-align:center;font-size:40px;margin-bottom:8px">📬</div>
+      <div class="au-title" style="text-align:center">Controlla la tua email</div>
+      <div class="au-sub" style="text-align:center">Se l'indirizzo è registrato, riceverai un'email con le istruzioni per reimpostare la password. Controlla anche lo spam.</div>
+      <button class="au-btn au-btn-primary" id="auForgotDone">Torna al login</button>
+    `);
+    on('auForgotDone', 'click', mostraLogin);
   }
 
   // ============================================================
@@ -415,11 +458,6 @@
       if (e) e.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); fn(); } });
     });
   }
-  function mostraInfoTemporanea(testo) {
-    // piccolo avviso non bloccante in cima alla card login
-    showErr('auLoginErr', testo);
-  }
-
   // ---- API pubblica ----
   window.AuthUI = {
     avvia: avvia,
