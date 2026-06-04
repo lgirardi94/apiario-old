@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FILE VERSION: 2026-06-04.9 · visita_rapida.html -->
+<!-- FILE VERSION: 2026-06-04.10 · visita_rapida.html -->
 <html lang="it">
 <head>
 <meta charset="UTF-8">
@@ -18,6 +18,7 @@
 <script src="js/storage.js?v=20260567"></script>
 <script src="js/backendAdapter.js?v=20260604"></script>
 <script src="js/auth.js?v=20260604"></script>
+<script src="js/auth-ui.js?v=20260604"></script>
 <style>
   /* WIZARD */
   .wizard-header {
@@ -794,24 +795,31 @@ function formatGiorniFa(dateStr) {
   return `${Math.floor(d/30)} mesi fa`;
 }
 
-// ===== DRIVE =====
-window.addEventListener('load', () => {
+// ===== AVVIO: gate scelta modalità (Drive / Account) + controllo sessione =====
+
+// Caricamento dati condiviso: se riesce mostra il wizard, altrimenti SOLLEVA.
+async function caricaDatiEMostra() {
+  const { db, mag, cont } = await Storage.carica();
+  if(db)   dbData   = db;
+  if(mag)  magData  = mag;
+  if(cont) contData = cont;
+  showWizard();
+}
+
+function avviaModalitaDrive() {
   setTimeout(() => {
     initDrive(
       async () => {
         showLoadingState('🔄 Caricamento dati...');
         try {
-          const { db, mag, cont } = await Storage.carica();
-          if(db)   dbData   = db;
-          if(mag)  magData  = mag;
-          if(cont) contData = cont;
-          showWizard();
+          await caricaDatiEMostra();
         } catch(e) {
           console.error('[Apiario] Errore caricamento iniziale:', e);
-          if(e.message === 'DRIVE_UNAUTHORIZED') {
+          if(e && e.message === 'DRIVE_UNAUTHORIZED') {
             showLoginState();
           } else {
-            showLoadingState('❌ Errore: ' + e.message);
+            // Non aprire il wizard a vuoto: mostra login (più sicuro)
+            showLoginState();
           }
         }
       },
@@ -819,6 +827,29 @@ window.addEventListener('load', () => {
       () => showLoginState()
     );
   }, 600);
+}
+
+async function avviaModalitaAccount() {
+  showLoadingState('🔄 Caricamento dati...');
+  try {
+    await caricaDatiEMostra();
+  } catch(e) {
+    console.error('[Apiario] Errore caricamento (account):', e);
+    if(e && e.code === 'AUTH_EXPIRED') return; // l'adapter ha già riportato al login
+    showLoginState();
+  }
+}
+
+window.addEventListener('load', () => {
+  if(typeof AuthUI !== 'undefined' && AuthUI.avvia) {
+    AuthUI.avvia({
+      titolo: 'Visita rapida',
+      onDrive: avviaModalitaDrive,
+      onAccount: avviaModalitaAccount,
+    });
+  } else {
+    avviaModalitaDrive();
+  }
 });
 
 function showLoadingState(msg) {
@@ -1668,8 +1699,8 @@ async function saveVisita() {
   } catch(e) {
     console.error('[Visita rapida] Errore salvataggio:', e);
     const btn = document.getElementById('btnNext');
-    if(e.message === 'DRIVE_UNAUTHORIZED') {
-      showToast('🔒 Sessione Google scaduta — accedi di nuovo', 4000);
+    if(e && (e.message === 'DRIVE_UNAUTHORIZED' || e.code === 'AUTH_EXPIRED')) {
+      showToast('🔒 Sessione scaduta — accedi di nuovo', 4000);
       setTimeout(() => {
         document.getElementById('wizContent').style.display = 'none';
         document.getElementById('wizLoginScreen').style.display = 'flex';

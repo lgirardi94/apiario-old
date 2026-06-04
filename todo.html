@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FILE VERSION: 2026-06-04.4 · todo.html -->
+<!-- FILE VERSION: 2026-06-04.5 · todo.html -->
 <html lang="it">
 <head>
 <meta charset="UTF-8">
@@ -17,6 +17,7 @@
 <script src="js/storage.js?v=20260567"></script>
 <script src="js/backendAdapter.js?v=20260604"></script>
 <script src="js/auth.js?v=20260604"></script>
+<script src="js/auth-ui.js?v=20260604"></script>
 <style>
   :root {
     --amber: #C8860A; --amber-light: #E8A020; --amber-pale: #FDF3DC; --amber-glow: #F5C842;
@@ -341,24 +342,56 @@ function showLoginScreen() {
     </button>`;
 }
 
-// ===== DRIVE INIT =====
-window.addEventListener('load', () => {
+// ===== AVVIO: gate scelta modalità (Drive / Account) + controllo sessione =====
+
+// Caricamento dati condiviso: se riesce mostra l'app, altrimenti SOLLEVA.
+async function caricaDatiEMostra() {
+  const db = await Storage.leggiFile(FILENAME_DB);
+  if(db && db.arnie) arnie = db.arnie;
+  const t = await Storage.leggiFile(FILENAME_TODO);
+  if(t && Array.isArray(t.todos)) todos = t.todos;
+  showApp();
+}
+
+function avviaModalitaDrive() {
   setTimeout(() => {
     initDrive(
       async () => {
         showLoadingScreen('🔄 Caricamento...');
         try {
-          const db = await Storage.leggiFile(FILENAME_DB);
-          if(db && db.arnie) arnie = db.arnie;
-          const t = await Storage.leggiFile(FILENAME_TODO);
-          if(t && Array.isArray(t.todos)) todos = t.todos;
-        } catch(e) { console.error('[Todo PWA] Errore caricamento:', e); }
-        showApp();
+          await caricaDatiEMostra();
+        } catch(e) {
+          console.error('[Todo PWA] Errore caricamento:', e);
+          showLoginScreen();
+        }
       },
       () => showLoadingScreen('🔄 Caricamento...'),
       () => showLoginScreen()
     );
   }, 600);
+}
+
+async function avviaModalitaAccount() {
+  showLoadingScreen('🔄 Caricamento...');
+  try {
+    await caricaDatiEMostra();
+  } catch(e) {
+    console.error('[Todo PWA] Errore caricamento (account):', e);
+    if(e && e.code === 'AUTH_EXPIRED') return;
+    showLoginScreen();
+  }
+}
+
+window.addEventListener('load', () => {
+  if(typeof AuthUI !== 'undefined' && AuthUI.avvia) {
+    AuthUI.avvia({
+      titolo: 'Cose da fare',
+      onDrive: avviaModalitaDrive,
+      onAccount: avviaModalitaAccount,
+    });
+  } else {
+    avviaModalitaDrive();
+  }
 });
 
 function showApp() {
