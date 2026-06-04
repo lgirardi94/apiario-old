@@ -1,4 +1,4 @@
-// ===== FILE VERSION: 2026-05-28.3 · drive-app.js =====
+// ===== FILE VERSION: 2026-06-04.4 · drive-app.js =====
 // ======= GOOGLE DRIVE — LOGIN OBBLIGATORIO + AUTO-SAVE =======
 
 // Costanti di timing
@@ -327,12 +327,21 @@ async function _doSave(silent) {
 }
 
 function driveLogoutApp() {
-  if(!confirm('Disconnettersi da Google Drive? Per accedere di nuovo dovrai rifare il login.')) return;
+  const inAccount = (typeof Auth !== 'undefined' && Auth.getModalita() === 'account');
+  const domanda = inAccount
+    ? 'Uscire dall\'account? Per rientrare dovrai accedere di nuovo.'
+    : 'Disconnettersi da Google Drive? Per accedere di nuovo dovrai rifare il login.';
+  if(!confirm(domanda)) return;
   // Cancella timer e flag pendenti
   if(_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
   _pendingSave = false;
   _hasUnsavedChanges = false;
-  driveLogout();
+  if(inAccount) {
+    // logout account: scarta il token (l'endpoint è no-op)
+    try { Auth.logout(); } catch(e) { console.error('[Auth] logout:', e.message); }
+  } else {
+    driveLogout();
+  }
   _isAuthorized = false;
   // Azzera lo stato in memoria
   arnie = []; logBook = [];
@@ -345,13 +354,45 @@ function driveLogoutApp() {
   // Pulisci anche la cache locale
   ['arnie','logBook','articoli','movimentazioni','movimentiContabili','obiettivi','necessita','todos','apiario_settings'].forEach(k => localStorage.removeItem(k));
   document.getElementById('appContent').style.display = 'none';
+  // Torna alla schermata di scelta modalità (così può cambiare Drive/Account)
+  if(typeof AuthUI !== 'undefined' && AuthUI.mostraScelta) {
+    const gate = document.getElementById('loginGate');
+    if(gate) gate.style.display = 'none';
+    AuthUI.mostraScelta();
+  } else {
+    document.getElementById('loginGate').style.display = 'flex';
+    document.getElementById('loginGateStatus').textContent = '👇 Tocca il pulsante per accedere';
+  }
+}
+
+// Avvio dei dati per la modalità Drive (flusso storico, invariato)
+function avviaModalitaDrive() {
   document.getElementById('loginGate').style.display = 'flex';
-  document.getElementById('loginGateStatus').textContent = '👇 Tocca il pulsante per accedere';
+  setTimeout(initGoogleDrive, DRIVE_INIT_DELAY_MS);
+}
+
+// Avvio per la modalità Account: i dati arrivano dal backend via Storage.
+// (AuthUI ha già attivato il BackendAdapter prima di chiamarci.)
+async function avviaModalitaAccount() {
+  const gate = document.getElementById('loginGate');
+  if(gate) gate.style.display = 'none';
+  await loadFromCloud();      // ora passa per il BackendAdapter
+  _isAuthorized = true;
+  showApp();
 }
 
 window.addEventListener('load', () => {
-  document.getElementById('loginGate').style.display = 'flex';
-  setTimeout(initGoogleDrive, DRIVE_INIT_DELAY_MS);
+  // Gate di scelta modalità (Drive / Account). Se AuthUI non è disponibile
+  // per qualunque motivo, ricade sul flusso Drive storico (sicurezza).
+  if (typeof AuthUI !== 'undefined' && AuthUI.avvia) {
+    AuthUI.avvia({
+      titolo: 'Il Mio Apiario',
+      onDrive: avviaModalitaDrive,
+      onAccount: avviaModalitaAccount,
+    });
+  } else {
+    avviaModalitaDrive();
+  }
 });
 
 // Avvisa prima di chiudere la scheda se ci sono modifiche non salvate
