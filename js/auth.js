@@ -1,4 +1,4 @@
-// ===== FILE VERSION: 2026-06-04.1 · auth.js =====
+// ===== FILE VERSION: 2026-06-04.3 · auth.js =====
 //
 // MODULO AUTENTICAZIONE (modalità account)
 // ========================================
@@ -53,6 +53,9 @@
 
   const CHIAVE_TOKEN = 'apiario_token';
   const CHIAVE_MODALITA = 'apiario_modalita';
+
+  // Utente corrente (popolato da login/register/me). Contiene anche role.
+  let _utenteCorrente = null;
 
   // ---- helper interno: fetch verso /api/auth con gestione errori ----
   async function authFetch(percorso, { method = 'GET', body = null, autenticata = false } = {}) {
@@ -135,6 +138,11 @@
     AUTH_EXPIRED:        'Sessione scaduta, accedi di nuovo.',
     RATE_LIMITED:        'Troppi tentativi, riprova tra poco.',
     NETWORK_ERROR:       'Connessione assente, riprova.',
+    NOT_ADMIN:           'Accesso riservato.',
+    CANNOT_DELETE_SELF:  'Non puoi eliminare il tuo stesso account.',
+    CANNOT_DEMOTE_SELF:  'Non puoi rimuovere il tuo ruolo admin.',
+    USER_NOT_FOUND:      'Utente non trovato.',
+    INVALID_ROLE:        'Ruolo non valido.',
   };
 
   // ---- oggetto pubblico ----
@@ -158,17 +166,21 @@
       if (nome) corpo.nome = nome;
       const res = await authFetch('/api/auth/register', { method: 'POST', body: corpo });
       if (res && res.token) scriviToken(res.token);
+      if (res && res.user) _utenteCorrente = res.user;
       return res;
     },
 
     async login({ email, password } = {}) {
       const res = await authFetch('/api/auth/login', { method: 'POST', body: { email, password } });
       if (res && res.token) scriviToken(res.token);
+      if (res && res.user) _utenteCorrente = res.user;
       return res;
     },
 
     async me() {
-      return await authFetch('/api/auth/me', { method: 'GET', autenticata: true });
+      const res = await authFetch('/api/auth/me', { method: 'GET', autenticata: true });
+      if (res && res.user) _utenteCorrente = res.user;
+      return res;
     },
 
     async logout() {
@@ -176,6 +188,7 @@
       try { await authFetch('/api/auth/logout', { method: 'POST' }); }
       catch (e) { /* non bloccare il logout locale per un errore di rete */ }
       rimuoviToken();
+      _utenteCorrente = null;
       return { ok: true };
     },
 
@@ -193,6 +206,34 @@
 
     async verifyEmail(token) {
       return await authFetch('/api/auth/verify-email?token=' + encodeURIComponent(token || ''), { method: 'GET' });
+    },
+
+    // --- utente corrente / ruolo ---
+    getUtente() { return _utenteCorrente; },
+    isAdmin() { return !!(_utenteCorrente && _utenteCorrente.role === 'admin'); },
+
+    // --- API: amministrazione (richiedono utente admin lato backend) ---
+    async adminStats() {
+      return await authFetch('/api/admin/stats', { method: 'GET', autenticata: true });
+    },
+    async adminUsers({ cerca = '', limit = 50, offset = 0 } = {}) {
+      const q = new URLSearchParams();
+      if (cerca) q.set('cerca', cerca);
+      q.set('limit', limit);
+      q.set('offset', offset);
+      return await authFetch('/api/admin/users?' + q.toString(), { method: 'GET', autenticata: true });
+    },
+    async adminUserDetail(id) {
+      return await authFetch('/api/admin/users/' + encodeURIComponent(id), { method: 'GET', autenticata: true });
+    },
+    async adminDeleteUser(id) {
+      return await authFetch('/api/admin/users/' + encodeURIComponent(id), { method: 'DELETE', autenticata: true });
+    },
+    async adminVerifyUser(id) {
+      return await authFetch('/api/admin/users/' + encodeURIComponent(id) + '/verify-email', { method: 'POST', autenticata: true });
+    },
+    async adminSetRole(id, role) {
+      return await authFetch('/api/admin/users/' + encodeURIComponent(id) + '/role', { method: 'PUT', body: { role }, autenticata: true });
     },
 
     // --- attivazione adapter backend ---

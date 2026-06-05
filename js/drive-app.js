@@ -1,4 +1,4 @@
-// ===== FILE VERSION: 2026-06-04.4 · drive-app.js =====
+// ===== FILE VERSION: 2026-06-04.6 · drive-app.js =====
 // ======= GOOGLE DRIVE — LOGIN OBBLIGATORIO + AUTO-SAVE =======
 
 // Costanti di timing
@@ -245,6 +245,12 @@ function showApp() {
     if(gate) gate.style.display = 'none';
     if(app) app.style.display = 'block';
     updateDriveUI(true);
+    // Mostra il link al pannello admin SOLO se l'utente è admin (modalità account).
+    // (La protezione vera è lato backend: gli endpoint /api/admin rispondono 403 ai non-admin.)
+    try {
+      const btnAdmin = document.getElementById('btnAdmin');
+      if(btnAdmin) btnAdmin.style.display = (typeof Auth !== 'undefined' && Auth.isAdmin && Auth.isAdmin()) ? 'inline-block' : 'none';
+    } catch(e) { console.error('[Drive] check admin:', e.message); }
   // Setup form
   document.getElementById('logData').value = today();
   const artCat = document.getElementById('artCategoria');
@@ -323,6 +329,25 @@ async function _doSave(silent) {
       _pendingSave = false;
       pushToCloud(true);
     }
+  }
+}
+
+// Dalla schermata di login Drive, torna alla scelta della modalità.
+// (La modalità Account ha già il "Cambia modalità" nel suo overlay.)
+function tornaAllaScelta() {
+  try {
+    // Dimentica la scelta Drive così la schermata di scelta riparte pulita
+    if(typeof Auth !== 'undefined' && Auth.clearModalita) Auth.clearModalita();
+    const gate = document.getElementById('loginGate');
+    if(gate) gate.style.display = 'none';
+    if(typeof AuthUI !== 'undefined' && AuthUI.mostraScelta) {
+      AuthUI.mostraScelta();
+    } else if(gate) {
+      // fallback: se AuthUI non c'è, lascia il loginGate visibile
+      gate.style.display = 'flex';
+    }
+  } catch(e) {
+    console.error('[Drive] tornaAllaScelta:', e.message);
   }
 }
 
