@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<!-- FILE VERSION: 2026-06-04.1 · admin.html -->
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pannello Admin · Il Mio Apiario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Spline+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="js/auth.js?v=20260604e"></script>
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    font-family:'Spline Sans',system-ui,sans-serif; color:#3A2E1A; min-height:100vh;
+    background:
+      radial-gradient(circle at 15% 8%, rgba(232,163,23,.07), transparent 40%),
+      linear-gradient(160deg, #FBF4E6 0%, #F3E7CF 100%);
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:20px 18px 60px; }
+
+  /* header */
+  .topbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 0 22px; flex-wrap:wrap; }
+  .topbar .left{ display:flex; align-items:center; gap:12px; }
+  .logo{
+    width:44px; height:44px; display:flex; align-items:center; justify-content:center; font-size:23px;
+    background:radial-gradient(circle at 35% 30%,#FFD466,#E8A317 70%); border-radius:13px;
+    box-shadow:0 4px 14px -6px rgba(139,94,20,.25), inset 0 -2px 6px rgba(139,94,20,.25); transform:rotate(-4deg);
+  }
+  .topbar h1{ font-family:'Fraunces',Georgia,serif; font-weight:600; font-size:21px; color:#8B5E14; }
+  .topbar .sub{ font-size:12.5px; color:#7A6A4F; }
+  .btn-back{ background:#FFFDF8; border:1.5px solid #E6D6B3; border-radius:20px; padding:8px 16px; font-size:13.5px; font-family:inherit; cursor:pointer; color:#8B5E14; text-decoration:none; }
+  .btn-back:hover{ background:#FBF4E6; }
+
+  /* stati pagina */
+  .pagestate{ text-align:center; padding:60px 20px; }
+  .pagestate .ico{ font-size:46px; margin-bottom:10px; }
+  .pagestate .titolo{ font-family:'Fraunces',Georgia,serif; font-size:20px; font-weight:600; margin-bottom:8px; }
+  .pagestate .msg{ color:#7A6A4F; font-size:14.5px; margin-bottom:20px; }
+  .spinner{ width:34px; height:34px; border:3px solid #EADFC4; border-top-color:#E8A317; border-radius:50%; margin:0 auto 14px; animation:spin .8s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* dashboard */
+  .stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:24px; }
+  .stat{ background:#FFFDF8; border:1px solid #E6D6B3; border-radius:16px; padding:16px 18px; box-shadow:0 6px 20px -14px rgba(139,94,20,.3); }
+  .stat .n{ font-family:'Fraunces',Georgia,serif; font-size:26px; font-weight:600; color:#8B5E14; line-height:1; }
+  .stat .l{ font-size:12.5px; color:#7A6A4F; margin-top:6px; }
+
+  /* ricerca */
+  .toolbar{ display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
+  .toolbar input{
+    flex:1; min-width:200px; padding:11px 14px; border:1.5px solid #E6D6B3; border-radius:12px; font-size:14.5px;
+    font-family:inherit; background:#FFFEFB; color:#3A2E1A;
+  }
+  .toolbar input:focus{ outline:none; border-color:#E8A317; box-shadow:0 0 0 3px rgba(232,163,23,.16); }
+  .toolbar .conta{ font-size:13px; color:#7A6A4F; white-space:nowrap; }
+
+  /* tabella */
+  .tablebox{ background:#FFFDF8; border:1px solid #E6D6B3; border-radius:16px; overflow:hidden; box-shadow:0 6px 20px -14px rgba(139,94,20,.3); }
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  thead th{ text-align:left; padding:12px 14px; background:#F6ECD4; color:#6B4A20; font-weight:600; font-size:12.5px; white-space:nowrap; }
+  tbody td{ padding:11px 14px; border-top:1px solid #EFE3C6; vertical-align:middle; }
+  tbody tr{ cursor:pointer; transition:background .12s; }
+  tbody tr:hover{ background:#FBF4E6; }
+  .badge{ display:inline-block; font-size:11px; font-weight:600; padding:2px 9px; border-radius:999px; }
+  .badge-ok{ background:#E3F0D8; color:#3F6B1E; }
+  .badge-no{ background:#FBEBD8; color:#9A6512; }
+  .badge-admin{ background:#E8DCF7; color:#5B3A8B; }
+  .muted{ color:#9A8A6E; font-size:12.5px; }
+  .empty{ text-align:center; padding:34px; color:#9A8A6E; font-style:italic; }
+
+  /* paginazione */
+  .pager{ display:flex; align-items:center; justify-content:center; gap:14px; margin-top:16px; }
+  .pager button{ background:#FFFDF8; border:1.5px solid #E6D6B3; border-radius:10px; padding:8px 14px; font-size:13.5px; font-family:inherit; cursor:pointer; color:#8B5E14; }
+  .pager button:disabled{ opacity:.45; cursor:default; }
+  .pager .info{ font-size:13px; color:#7A6A4F; }
+
+  /* modale dettaglio */
+  .modal{ position:fixed; inset:0; background:rgba(26,18,8,.55); display:none; align-items:center; justify-content:center; padding:20px; z-index:100; }
+  .modal .box{ background:#FFFDF8; border-radius:20px; max-width:460px; width:100%; max-height:90vh; overflow:auto; box-shadow:0 16px 50px -16px rgba(0,0,0,.4); position:relative; }
+  .modal .box::after{ content:""; position:absolute; top:0; left:0; right:0; height:5px; background:linear-gradient(90deg,#E8A317,#8B5E14); border-radius:20px 20px 0 0; }
+  .modal .head{ padding:22px 24px 12px; }
+  .modal .head h2{ font-family:'Fraunces',Georgia,serif; font-size:19px; font-weight:600; color:#3A2E1A; word-break:break-word; }
+  .modal .head .em{ color:#7A6A4F; font-size:13.5px; margin-top:3px; word-break:break-word; }
+  .modal .body{ padding:6px 24px 8px; }
+  .drow{ display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-top:1px solid #EFE3C6; font-size:13.5px; }
+  .drow .k{ color:#7A6A4F; }
+  .drow .v{ font-weight:600; text-align:right; }
+  .actions{ padding:14px 24px 22px; display:flex; flex-direction:column; gap:10px; }
+  .abtn{ width:100%; padding:11px; border-radius:11px; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; border:1.5px solid transparent; }
+  .abtn-verify{ background:#E3F0D8; color:#3F6B1E; border-color:#CADfB5; }
+  .abtn-role{ background:#EEE6FA; color:#5B3A8B; border-color:#DDD0F0; }
+  .abtn-del{ background:#FBE7E0; color:#B5562E; border-color:#EBC6B6; }
+  .abtn:hover{ filter:brightness(.98); }
+  .abtn:disabled{ opacity:.55; cursor:default; }
+  .closex{ position:absolute; top:14px; right:16px; background:none; border:none; font-size:20px; cursor:pointer; color:#7A6A4F; z-index:2; }
+  .merr{ background:#FBEBE4; border:1px solid #E6BBA6; color:#B5562E; font-size:13px; border-radius:10px; padding:9px 12px; margin:0 24px 8px; display:none; }
+  .mok{ background:#E3F0D8; border:1px solid #C4DDA8; color:#3F6B1E; font-size:13px; border-radius:10px; padding:9px 12px; margin:0 24px 8px; display:none; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="left">
+        <div class="logo">🛡️</div>
+        <div>
+          <h1>Pannello Admin</h1>
+          <div class="sub">Il Mio Apiario · gestione utenti</div>
+        </div>
+      </div>
+      <a class="btn-back" href="index.html">← Torna all'app</a>
+    </div>
+
+    <div id="contenuto">
+      <div class="pagestate"><div class="spinner"></div><div class="msg">Verifica accesso...</div></div>
+    </div>
+  </div>
+
+  <!-- Modale dettaglio utente -->
+  <div class="modal" id="modal">
+    <div class="box">
+      <button class="closex" onclick="chiudiDettaglio()">✕</button>
+      <div class="head">
+        <h2 id="dNome">—</h2>
+        <div class="em" id="dEmail">—</div>
+      </div>
+      <div class="merr" id="dErr"></div>
+      <div class="mok" id="dOk"></div>
+      <div class="body" id="dBody"></div>
+      <div class="actions" id="dActions"></div>
+    </div>
+  </div>
+
+<script>
+  (function () {
+    'use strict';
+
+    // stato pagina
+    let _utenteAdmin = null;     // l'admin loggato (da me())
+    let _cerca = '';
+    let _offset = 0;
+    const LIMIT = 50;
+    let _totale = 0;
+    let _utenteAperto = null;    // utente nel dettaglio
+
+    function el(id){ return document.getElementById(id); }
+    function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function vista(html){ const c = el('contenuto'); if(c) c.innerHTML = html; }
+    function fmtData(s){
+      if(!s) return '—';
+      try { const d = new Date(s); if(isNaN(d)) return '—'; return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+      catch(e){ return '—'; }
+    }
+
+    // --- accesso negato / redirect ---
+    function accessoNegato(msg){
+      vista(`
+        <div class="pagestate">
+          <div class="ico">🔒</div>
+          <div class="titolo">${esc(msg || 'Accesso riservato')}</div>
+          <div class="msg">Questa area è riservata all'amministratore.</div>
+          <a class="btn-back" href="index.html">← Torna all'app</a>
+        </div>
+      `);
+    }
+    function vaiAlLogin(){
+      // sessione scaduta: torna all'app, che mostrerà il login
+      window.location.href = 'index.html';
+    }
+
+    // --- avvio: controlla che sia admin ---
+    async function avvia(){
+      if(typeof Auth === 'undefined'){ accessoNegato('Errore tecnico'); return; }
+      if(!Auth.isLoggedIn()){ accessoNegato('Devi accedere come amministratore'); return; }
+      try {
+        const res = await Auth.me();
+        const u = res && res.user;
+        if(!u || u.role !== 'admin'){ accessoNegato('Accesso riservato'); return; }
+        _utenteAdmin = u;
+        montaLayout();
+        await Promise.all([caricaStats(), caricaUtenti()]);
+      } catch(e){
+        console.error('[Admin] avvio:', e.message);
+        if(e && e.code === 'AUTH_EXPIRED'){ vaiAlLogin(); return; }
+        accessoNegato(Auth.messaggioErrore ? Auth.messaggioErrore(e) : 'Accesso non riuscito');
+      }
+    }
+
+    // --- layout principale (dopo verifica admin) ---
+    function montaLayout(){
+      vista(`
+        <div class="stats" id="stats">
+          <div class="stat"><div class="n">…</div><div class="l">Caricamento…</div></div>
+        </div>
+        <div class="toolbar">
+          <input type="search" id="cerca" placeholder="🔍 Cerca per email o nome…" autocomplete="off">
+          <span class="conta" id="conta"></span>
+        </div>
+        <div class="tablebox">
+          <table>
+            <thead>
+              <tr>
+                <th>Email</th><th>Nome</th><th>Stato</th><th>Registrato</th><th>Ultimo accesso</th><th>File</th>
+              </tr>
+            </thead>
+            <tbody id="righe">
+              <tr><td colspan="6" class="empty">Caricamento…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager" id="pager"></div>
+      `);
+      // ricerca con debounce
+      let t = null;
+      const inp = el('cerca');
+      if(inp) inp.addEventListener('input', function(){
+        clearTimeout(t);
+        t = setTimeout(function(){ _cerca = inp.value.trim(); _offset = 0; caricaUtenti(); }, 350);
+      });
+    }
+
+    // --- dashboard stats ---
+    async function caricaStats(){
+      try {
+        const s = await Auth.adminStats();
+        const box = el('stats');
+        if(!box || !s) return;
+        const card = (n,l) => `<div class="stat"><div class="n">${n==null?'—':n}</div><div class="l">${l}</div></div>`;
+        box.innerHTML =
+          card(s.totale_utenti, 'Utenti totali') +
+          card(s.utenti_verificati, 'Verificati') +
+          card(s.nuovi_7_giorni, 'Nuovi (7 giorni)') +
+          card(s.nuovi_30_giorni, 'Nuovi (30 giorni)') +
+          card(s.totale_file, 'File salvati') +
+          card(s.totale_backup, 'Backup');
+      } catch(e){
+        console.error('[Admin] stats:', e.message);
+        if(e && e.code === 'AUTH_EXPIRED') vaiAlLogin();
+      }
+    }
+
+    // --- tabella utenti ---
+    async function caricaUtenti(){
+      const tb = el('righe');
+      if(tb) tb.innerHTML = `<tr><td colspan="6" class="empty">Caricamento…</td></tr>`;
+      try {
+        const res = await Auth.adminUsers({ cerca: _cerca, limit: LIMIT, offset: _offset });
+        const utenti = (res && res.utenti) || [];
+        _totale = (res && typeof res.totale === 'number') ? res.totale : utenti.length;
+
+        if(utenti.length === 0){
+          if(tb) tb.innerHTML = `<tr><td colspan="6" class="empty">${_cerca ? 'Nessun utente trovato per «'+esc(_cerca)+'».' : 'Nessun utente registrato.'}</td></tr>`;
+        } else if(tb){
+          tb.innerHTML = utenti.map(function(u){
+            const stato = u.email_verified
+              ? '<span class="badge badge-ok">verificato</span>'
+              : '<span class="badge badge-no">da verificare</span>';
+            const ruolo = u.role === 'admin' ? ' <span class="badge badge-admin">admin</span>' : '';
+            return `<tr data-id="${esc(u.id)}">
+              <td>${esc(u.email)}${ruolo}</td>
+              <td>${u.nome ? esc(u.nome) : '<span class="muted">—</span>'}</td>
+              <td>${stato}</td>
+              <td>${fmtData(u.created_at)}</td>
+              <td>${fmtData(u.last_login_at)}</td>
+              <td>${u.num_file==null?'—':u.num_file}</td>
+            </tr>`;
+          }).join('');
+          // click riga → dettaglio
+          Array.prototype.forEach.call(tb.querySelectorAll('tr'), function(tr){
+            tr.addEventListener('click', function(){ apriDettaglio(tr.getAttribute('data-id')); });
+          });
+        }
+        renderConteggio();
+        renderPager();
+      } catch(e){
+        console.error('[Admin] utenti:', e.message);
+        if(e && e.code === 'AUTH_EXPIRED'){ vaiAlLogin(); return; }
+        if(tb) tb.innerHTML = `<tr><td colspan="6" class="empty">Errore nel caricamento: ${esc(Auth.messaggioErrore ? Auth.messaggioErrore(e) : e.message)}</td></tr>`;
+      }
+    }
+
+    function renderConteggio(){
+      const c = el('conta');
+      if(c) c.textContent = _totale === 1 ? '1 utente' : _totale + ' utenti';
+    }
+    function renderPager(){
+      const p = el('pager');
+      if(!p) return;
+      if(_totale <= LIMIT){ p.innerHTML = ''; return; }
+      const da = _offset + 1;
+      const a = Math.min(_offset + LIMIT, _totale);
+      const primaDisab = _offset <= 0 ? 'disabled' : '';
+      const dopoDisab = (_offset + LIMIT) >= _totale ? 'disabled' : '';
+      p.innerHTML = `
+        <button id="pgPrev" ${primaDisab}>← Precedenti</button>
+        <span class="info">${da}–${a} di ${_totale}</span>
+        <button id="pgNext" ${dopoDisab}>Successivi →</button>
+      `;
+      const prev = el('pgPrev'), next = el('pgNext');
+      if(prev) prev.addEventListener('click', function(){ if(_offset>0){ _offset = Math.max(0,_offset-LIMIT); caricaUtenti(); } });
+      if(next) next.addEventListener('click', function(){ if(_offset+LIMIT<_totale){ _offset += LIMIT; caricaUtenti(); } });
+    }
+
+    // --- dettaglio utente (modale) ---
+    function mErr(msg){ const e = el('dErr'); if(e){ e.textContent = msg; e.style.display='block'; } const o = el('dOk'); if(o) o.style.display='none'; }
+    function mOk(msg){ const o = el('dOk'); if(o){ o.textContent = msg; o.style.display='block'; } const e = el('dErr'); if(e) e.style.display='none'; }
+    function mClear(){ const e = el('dErr'); if(e) e.style.display='none'; const o = el('dOk'); if(o) o.style.display='none'; }
+
+    async function apriDettaglio(id){
+      mClear();
+      el('dNome').textContent = 'Caricamento…';
+      el('dEmail').textContent = '';
+      el('dBody').innerHTML = '';
+      el('dActions').innerHTML = '';
+      el('modal').style.display = 'flex';
+      try {
+        const res = await Auth.adminUserDetail(id);
+        const u = res && res.utente;
+        if(!u){ mErr('Utente non trovato.'); return; }
+        _utenteAperto = u;
+        renderDettaglio(u);
+      } catch(e){
+        console.error('[Admin] dettaglio:', e.message);
+        if(e && e.code === 'AUTH_EXPIRED'){ vaiAlLogin(); return; }
+        mErr(Auth.messaggioErrore ? Auth.messaggioErrore(e) : 'Errore nel caricamento.');
+      }
+    }
+
+    function renderDettaglio(u){
+      el('dNome').textContent = u.nome ? u.nome : '(senza nome)';
+      el('dEmail').textContent = u.email || '';
+      const riga = (k,v) => `<div class="drow"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+      el('dBody').innerHTML =
+        riga('Stato email', u.email_verified ? '<span class="badge badge-ok">verificato</span>' : '<span class="badge badge-no">da verificare</span>') +
+        riga('Ruolo', u.role === 'admin' ? '<span class="badge badge-admin">admin</span>' : 'utente') +
+        riga('Registrato', fmtData(u.created_at)) +
+        riga('Ultimo accesso', fmtData(u.last_login_at)) +
+        riga('File / Backup', (u.num_file==null?'—':u.num_file) + ' / ' + (u.num_backup==null?'—':u.num_backup)) +
+        riga('Arnie / Visite', (u.num_arnie==null?'—':u.num_arnie) + ' / ' + (u.num_visite==null?'—':u.num_visite));
+
+      const aBox = el('dActions');
+      const isSelf = _utenteAdmin && (String(_utenteAdmin.id) === String(u.id));
+      let html = '';
+      if(!u.email_verified){
+        html += `<button class="abtn abtn-verify" id="aVerify">✓ Forza verifica email</button>`;
+      }
+      if(!isSelf){
+        if(u.role === 'admin'){
+          html += `<button class="abtn abtn-role" id="aRole">↓ Rimuovi ruolo admin</button>`;
+        } else {
+          html += `<button class="abtn abtn-role" id="aRole">↑ Rendi admin</button>`;
+        }
+        html += `<button class="abtn abtn-del" id="aDel">🗑 Elimina utente e dati</button>`;
+      } else {
+        html += `<div class="muted" style="text-align:center;padding:4px">Questo è il tuo account: non puoi eliminarlo né cambiarne il ruolo.</div>`;
+      }
+      aBox.innerHTML = html;
+
+      const bV = el('aVerify'); if(bV) bV.addEventListener('click', function(){ azioneVerifica(u); });
+      const bR = el('aRole'); if(bR) bR.addEventListener('click', function(){ azioneRuolo(u); });
+      const bD = el('aDel'); if(bD) bD.addEventListener('click', function(){ azioneElimina(u); });
+    }
+
+    function disabilitaAzioni(dis){
+      Array.prototype.forEach.call(document.querySelectorAll('#dActions .abtn'), function(b){ b.disabled = dis; });
+    }
+
+    async function azioneVerifica(u){
+      mClear(); disabilitaAzioni(true);
+      try {
+        await Auth.adminVerifyUser(u.id);
+        mOk('Email verificata.');
+        u.email_verified = true; _utenteAperto = u;
+        renderDettaglio(u);
+        caricaUtenti(); caricaStats();
+      } catch(e){
+        console.error('[Admin] verifica:', e.message);
+        if(e && e.code === 'AUTH_EXPIRED'){ vaiAlLogin(); return; }
+        mErr(Auth.messaggioErrore ? Auth.messaggioErrore(e) : 'Operazione non riuscita.');
+        disabilitaAzioni(false);
+      }
+    }
+
+    async function azioneRuolo(u){
+      const nuovo = u.role === 'admin' ? 'user' : 'admin';
+      const conferma = nuovo === 'admin'
+        ? 'Rendere ' + (u.email||'questo utente') + ' un amministratore? Avrà accesso completo al pannello.'
+        : 'Rimuovere il ruolo admin a ' + (u.email||'questo utente') + '?';
+      if(!confirm(conferma)) return;
+      mClear(); disabilitaAzioni(true);
+      try {
+        await Auth.adminSetRole(u.id, nuovo);
+        u.role = nuovo; _utenteAperto = u;
+        mOk(nuovo === 'admin' ? 'Ora è amministratore.' : 'Ruolo admin rimosso.');
+        renderDettaglio(u);
+        caricaUtenti();
+      } catch(e){
+        console.error('[Admin] ruolo:', e.message);
+        if(e && e.code === 'AUTH_EXPIRED'){ vaiAlLogin(); return; }
+        mErr(Auth.messaggioErrore ? Auth.messaggioErrore(e) : 'Operazione non riuscita.');
+        disabilitaAzioni(false);
+      }
+    }
+
+    async function azioneElimina(u){
+      // conferma forte: digitare l'email
+      const digitato = prompt('ATTENZIONE: questa operazione elimina l\'utente e TUTTI i suoi dati (arnie, visite, magazzino, backup). È irreversibile.\n\nPer confermare, digita l\'email dell\'utente:\n' + (u.email||''));
+      if(digitato === null) return; // annullato
+      if(String(digitato).trim().toLowerCase() !== String(u.email||'').trim().toLowerCase()){
+        mErr('L\'email digitata non corrisponde. Eliminazione annullata.');
+        return;
+      }
+      mClear(); disabilitaAzioni(true);
+      try {
+        await Auth.adminDeleteUser(u.id);
+        chiudiDettaglio();
+        // ricarica lista e stats
+        caricaUtenti(); caricaStats();
+      } catch(e){
+        console.error('[Admin] elimina:', e.message);
+        if(e && e.code === 'AUTH_EXPIRED'){ vaiAlLogin(); return; }
+        mErr(Auth.messaggioErrore ? Auth.messaggioErrore(e) : 'Eliminazione non riuscita.');
+        disabilitaAzioni(false);
+      }
+    }
+
+    // chiusura modale (esposta globalmente per l'onclick)
+    window.chiudiDettaglio = function(){ const m = el('modal'); if(m) m.style.display = 'none'; _utenteAperto = null; };
+    // chiudi cliccando lo sfondo
+    document.addEventListener('click', function(ev){
+      const m = el('modal');
+      if(m && ev.target === m) window.chiudiDettaglio();
+    });
+
+    window.addEventListener('load', avvia);
+  })();
+</script>
+</body>
+</html>

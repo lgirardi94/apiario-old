@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FILE VERSION: 2026-06-04.37 · apiario.html (index.html) -->
+<!-- FILE VERSION: 2026-06-04.39 · apiario.html (index.html) -->
 <html lang="it">
 <head>
 <meta charset="UTF-8">
@@ -11,7 +11,7 @@
 <script src="shared.js?v=20260567"></script>
 <script src="js/storage.js?v=20260567"></script>
 <script src="js/backendAdapter.js?v=20260604"></script>
-<script src="js/auth.js?v=20260604"></script>
+<script src="js/auth.js?v=20260604e"></script>
 <script src="js/auth-ui.js?v=20260604d"></script>
 </head>
 <body>
@@ -26,6 +26,7 @@
     Accedi con Google
   </button>
   <p id="loginGateStatus" style="color:var(--text-light);font-size:0.85rem;font-style:italic;margin-top:0.5rem">⏳ Caricamento Google...</p>
+  <button onclick="tornaAllaScelta()" style="background:transparent;border:1.5px solid var(--cream-dark);border-radius:20px;padding:0.5rem 1.2rem;font-family:'Crimson Pro',serif;font-size:0.9rem;cursor:pointer;color:var(--brown);margin-top:0.3rem">← Cambia modalità di accesso</button>
 </div>
 
 <!-- APP CONTENT - inizialmente nascosto -->
@@ -61,6 +62,7 @@
   <div style="display:flex;align-items:center;gap:0.7rem;min-width:0">
     <span id="driveStatus" style="color:rgba(120,210,110,0.85);font-size:0.82rem;font-style:italic;font-family:'Crimson Pro',serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">☁️ Sincronizzato</span>
     <button id="btnDriveLogin" onclick="driveLogin()" style="display:none">Accedi</button>
+    <button id="btnAdmin" onclick="window.location.href='admin.html'" style="display:none;background:transparent;border:1px solid rgba(200,134,10,0.45);color:rgba(251,245,230,0.7);padding:0.3rem 0.75rem;border-radius:20px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:0.78rem;transition:all 0.2s;white-space:nowrap" onmouseover="this.style.background='rgba(200,134,10,0.15)';this.style.color='rgba(251,245,230,0.9)'" onmouseout="this.style.background='transparent';this.style.color='rgba(251,245,230,0.7)'">🛡️ Admin</button>
     <button id="btnDriveLogout" onclick="driveLogoutApp()" style="background:transparent;border:1px solid rgba(200,134,10,0.35);color:rgba(251,245,230,0.55);padding:0.3rem 0.75rem;border-radius:20px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:0.78rem;transition:all 0.2s;white-space:nowrap" onmouseover="this.style.background='rgba(200,134,10,0.15)';this.style.color='rgba(251,245,230,0.85)'" onmouseout="this.style.background='transparent';this.style.color='rgba(251,245,230,0.55)'">Disconnetti</button>
   </div>
 
@@ -2805,14 +2807,14 @@
 <script src="js/todo.js?v=20260555"></script>
 <script src="js/ricerca.js?v=20260555"></script>
 <script src="js/insights.js?v=20260565"></script>
-<script src="js/versioni.js?v=20260604d"></script>
+<script src="js/versioni.js?v=20260604f"></script>
 <script src="js/filtri.js?v=20260566"></script>
 <script src="js/contabilita.js?v=20260555"></script>
 <script src="js/obiettivi.js?v=20260556"></script>
 <script src="js/calcolatori.js?v=20260555"></script>
 <script src="js/report.js?v=20260563"></script>
 <script src="js/home.js?v=20260555"></script>
-<script src="js/drive-app.js?v=20260604b"></script>
+<script src="js/drive-app.js?v=20260604eb"></script>
 
 </body>
 </html>
