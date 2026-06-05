@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FILE VERSION: 2026-06-04.6 · etichette.html -->
+<!-- FILE VERSION: 2026-06-04.8 · etichette.html -->
 <html lang="it">
 <head>
 <meta charset="UTF-8">
@@ -11,7 +11,7 @@
 <script src="shared.js?v=20260567"></script>
 <script src="js/storage.js?v=20260567"></script>
 <script src="js/backendAdapter.js?v=20260604"></script>
-<script src="js/auth.js?v=20260604"></script>
+<script src="js/auth.js?v=20260604e"></script>
 <script src="js/auth-ui.js?v=20260604d"></script>
 <style>
   /* ===== THEMING APP ===== */
@@ -634,6 +634,7 @@
     Accedi con Google
   </button>
   <p id="loginGateStatus" style="font-size:0.85rem;font-style:italic;margin-top:0.5rem">⏳ Caricamento...</p>
+  <button onclick="tornaAllaScelta()" style="background:transparent;border:1.5px solid #ddd;border-radius:20px;padding:0.5rem 1.1rem;font-size:0.85rem;cursor:pointer;color:#7A6A4F;margin-top:0.8rem">← Cambia modalità</button>
 </div>
 
 <!-- APP CONTENT -->
@@ -782,6 +783,17 @@ function showAppContent() {
   document.getElementById('appContent').style.display = 'block';
   document.getElementById('driveDot').classList.add('connected');
   render();
+}
+
+// Torna alla schermata di scelta modalità (anche dalla login Drive)
+function tornaAllaScelta() {
+  try {
+    if(typeof Auth !== 'undefined' && Auth.clearModalita) Auth.clearModalita();
+    const g = document.getElementById('loginGate');
+    if(g) g.style.display = 'none';
+    if(typeof AuthUI !== 'undefined' && AuthUI.mostraScelta) AuthUI.mostraScelta();
+    else if(g) g.style.display = 'flex';
+  } catch(e) { console.error('[Etichette] tornaAllaScelta:', e.message); }
 }
 
 // ===== AVVIO: gate scelta modalità (Drive / Account) + controllo sessione =====
