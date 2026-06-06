@@ -277,6 +277,10 @@ Serve a garantire che i file caricati siano allineati e che le cache siano inval
 4. **Modalità Account**: impostare `BASE_URL` in `js/auth.js` con l'URL del backend; assicurarsi che il backend abbia il CORS aperto verso il dominio del frontend e che i link email puntino a `verifica-email.html` / `reimposta-password.html`.
 5. Aprire l'app, scegliere la modalità e testare salvataggio/caricamento.
 
+> **Backend con Docker:** per sviluppo o self-hosting del backend, `docker compose up` avvia
+> PostgreSQL + API con lo schema già applicato — dettagli in [`guida_docker.md`](guida_docker.md)
+> e nel README del backend. Senza Docker: `./scripts/setup.sh` oppure `npm run db:migrate`.
+
 ---
 
 ## 11. Note storiche / decisioni

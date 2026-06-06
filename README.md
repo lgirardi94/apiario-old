@@ -209,6 +209,16 @@ App **statica** (HTML + CSS + JavaScript vanilla), senza framework né build. Os
 3. Attiva **GitHub Pages** sul branch principale
 4. Per aggiornare: sostituisci i file modificati e fai un **hard refresh** (Ctrl/Cmd + Shift + R)
 
+### ⚙️ Backend (modalità Account, opzionale)
+
+La modalità Account usa un backend separato (API REST + PostgreSQL). Per installarlo:
+
+- **Docker (più semplice):** `docker compose up --build` nella cartella del backend → guida completa in [`docs/guida_docker.md`](docs/guida_docker.md).
+- **Manuale / script:** vedi il [README del backend](docs/apiario-backend/apiario-backend/README.md) (`./scripts/setup.sh`).
+- **Deploy gestito:** [`docs/guida_deploy_digitalocean.md`](docs/guida_deploy_digitalocean.md) o [`docs/guida_deploy_end_to_end.md`](docs/guida_deploy_end_to_end.md).
+
+> La modalità Google Drive funziona **senza** backend: questo è aggiuntivo.
+
 ### 🏷️ Sistema versioni e verifica allineamento
 
 Ogni file ha in cima un header con la sua versione, nel formato:

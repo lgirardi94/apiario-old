@@ -144,8 +144,24 @@ Alcuni piani offrono una console SQL integrata:
    ```
    Dovresti vedere: `users`, `user_files`, `user_backups`, `auth_tokens`.
 
-> Tieni a portata di mano `psql` (o la console web): ti servirà anche dopo, per **designare il
-> primo admin** (Parte 5).
+### Metodo C — Automatico, da Node (consigliato: niente copia-incolla)
+
+Il progetto include `npm run db:migrate`: crea lo schema **e** applica le migration,
+tenendo traccia di quelle già applicate (tabella `schema_migrations`). Non serve `psql`.
+
+- **Su App Platform:** imposta come *Run Command* (o come job di pre-deploy):
+  ```
+  npm run db:migrate && npm start
+  ```
+  Così, a ogni deploy, lo schema resta allineato in automatico.
+- **In locale:** lo fa già `./scripts/setup.sh`, che chiama `db:migrate` per te.
+
+> È idempotente: puoi rilanciarlo quante volte vuoi senza rompere nulla.
+
+> Per il **primo admin** (Parte 5) hai due strade: impostare `FIRST_ADMIN_EMAIL` tra le
+> variabili d'ambiente (chi si registra con quell'email diventa admin in automatico) **oppure**
+> lo script manuale `./scripts/create-admin.sh`. Per quest'ultimo tieni a portata `psql` o la
+> console web.
 
 ---
 
