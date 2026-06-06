@@ -1,0 +1,55 @@
+# =========================================================
+#  docker-compose.yml — ambiente di SVILUPPO locale completo.
+#  Avvia PostgreSQL + backend con un solo comando:
+#
+#      docker compose up --build
+#
+#  Al primo avvio l'app esegue 'npm run db:migrate' (schema + migration
+#  tracciate) sul database del container: tutto pronto senza installare
+#  Node o psql sul tuo computer.
+#
+#  L'API sarà su http://localhost:3000  (healthcheck: /health).
+#  Per fermare:  docker compose down       (i dati restano nel volume)
+#                docker compose down -v     (azzera anche il database)
+# =========================================================
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: apiario
+      POSTGRES_PASSWORD: apiario
+      POSTGRES_DB: apiario
+    ports:
+      - "5432:5432"        # comodo per ispezionare il DB dall'host
+    volumes:
+      - apiario_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U apiario -d apiario"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy   # parte solo quando il DB è pronto
+    environment:
+      NODE_ENV: development
+      PORT: "3000"
+      DATABASE_URL: postgresql://apiario:apiario@db:5432/apiario
+      DATABASE_SSL: "false"          # in locale niente SSL
+      JWT_SECRET: dev-secret-non-usare-in-produzione
+      FRONTEND_URL: http://localhost:5500
+      # Email disattivata in dev finché non metti una chiave Brevo:
+      BREVO_API_KEY: ""
+      # Imposta la tua email per diventare admin alla registrazione:
+      FIRST_ADMIN_EMAIL: ""
+    ports:
+      - "3000:3000"
+    # Crea/aggiorna lo schema e poi avvia: un solo flusso, sempre allineato.
+    command: sh -c "npm run db:migrate && npm start"
+
+volumes:
+  apiario_db:

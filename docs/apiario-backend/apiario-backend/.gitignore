@@ -1,0 +1,20 @@
+# Dipendenze
+node_modules/
+
+# Variabili d'ambiente e segreti — MAI nel repository
+.env
+.env.local
+.env.*.local
+
+# Log
+*.log
+npm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp

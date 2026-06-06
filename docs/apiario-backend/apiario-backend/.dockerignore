@@ -1,0 +1,19 @@
+# Non copiare nell'immagine Docker
+node_modules
+npm-debug.log*
+*.log
+
+# Segreti: MAI nell'immagine
+.env
+.env.local
+.env.*.local
+
+# Git ed editor
+.git
+.gitignore
+.vscode
+.idea
+
+# SO
+.DS_Store
+Thumbs.db
