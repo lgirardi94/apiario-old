@@ -1,0 +1,10 @@
+# File che NON devono finire nell'immagine del frontend.
+# (Dockerfile e nginx.conf servono per il build, quindi NON sono qui;
+#  vengono rimossi dalla cartella pubblica dentro il Dockerfile.)
+
+.git
+.gitignore
+*.md
+gen_icons.py
+.DS_Store
+Thumbs.db
