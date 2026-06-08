@@ -1,4 +1,4 @@
-// ===== FILE VERSION: 2026-06-04.4 · report.js =====
+// ===== FILE VERSION: 2026-06-04.5 · report.js =====
 /* ===========================================================
    REPORT PDF — Generazione documenti stampabili
    =========================================================== */
@@ -216,7 +216,7 @@ function generaReportCompleto() {
   }
 
   // Costruisci HTML report
-  const html = `<!DOCTYPE html>
+  let html = `<!DOCTYPE html>
 <html lang="it">
 <head>
 <meta charset="UTF-8">
