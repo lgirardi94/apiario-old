@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FILE VERSION: 2026-06-04.15 · inserimento_rapido.html -->
+<!-- FILE VERSION: 2026-06-04.16 · inserimento_rapido.html -->
 <html lang="it">
 <head>
 <meta charset="UTF-8">
@@ -26,6 +26,7 @@
   <span style="font-size:1.4rem">⬆️</span>
   <h1>Inserimento</h1>
   <div class="drive-dot" id="driveDot" title="Google Drive"></div>
+  <button id="btnLogoutPWA" onclick="logoutPWA()" title="Esci" style="display:none;background:transparent;border:1px solid rgba(255,255,255,0.35);color:rgba(255,255,255,0.85);border-radius:16px;padding:0.25rem 0.7rem;font-size:0.78rem;cursor:pointer;margin-left:0.5rem">Esci</button>
 </header>
 
 <!-- LOGIN SCREEN -->
@@ -393,6 +394,25 @@ function showLoginScreen() {
   `;
 }
 
+// Logout dall'interno della PWA (consapevole della modalità)
+function logoutPWA() {
+  const inAccount = (typeof Auth !== 'undefined' && Auth.getModalita() === 'account');
+  const domanda = inAccount
+    ? 'Uscire dall\'account? Per rientrare dovrai accedere di nuovo.'
+    : 'Disconnettersi da Google Drive?';
+  if(!confirm(domanda)) return;
+  try {
+    if(inAccount) { if(Auth.logout) Auth.logout(); }
+    else { if(typeof driveLogout === 'function') driveLogout(); }
+  } catch(e) { console.error('[Inserimento rapido] logout:', e.message); }
+  // Torna alla scelta modalità
+  if(typeof Auth !== 'undefined' && Auth.clearModalita) Auth.clearModalita();
+  const app = document.getElementById('appContent');
+  if(app) app.style.display = 'none';
+  if(typeof AuthUI !== 'undefined' && AuthUI.mostraScelta) AuthUI.mostraScelta();
+  else if(typeof showLoginScreen === 'function') showLoginScreen();
+}
+
 // Torna alla schermata di scelta modalità (anche dalla login Drive)
 function tornaAllaScelta() {
   try {
@@ -465,6 +485,8 @@ function showApp() {
   document.getElementById('driveLoginScreen').style.display = 'none';
   document.getElementById('appContent').style.display = 'block';
   document.getElementById('driveDot').classList.add('connected');
+  const btnLog = document.getElementById('btnLogoutPWA');
+  if(btnLog) btnLog.style.display = 'inline-block';
   document.getElementById('contData').value = today();
   document.getElementById('magData').value  = today();
   renderCatChips();

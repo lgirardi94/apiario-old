@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FILE VERSION: 2026-06-04.8 · todo.html -->
+<!-- FILE VERSION: 2026-06-04.9 · todo.html -->
 <html lang="it">
 <head>
 <meta charset="UTF-8">
@@ -157,6 +157,7 @@
       <h1>Da fare</h1>
     </div>
     <div class="drive-dot" id="driveDot" title="Google Drive"></div>
+    <button id="btnLogoutPWA" onclick="logoutPWA()" title="Esci" style="display:none;background:transparent;border:1px solid rgba(255,255,255,0.35);color:rgba(255,255,255,0.85);border-radius:16px;padding:0.25rem 0.7rem;font-size:0.78rem;cursor:pointer;margin-left:0.5rem">Esci</button>
   </div>
   <div class="sub" id="headerSub">Il tuo apiario</div>
 </header>
@@ -343,6 +344,24 @@ function showLoginScreen() {
     </button>`;
 }
 
+// Logout dall'interno della PWA (consapevole della modalità)
+function logoutPWA() {
+  const inAccount = (typeof Auth !== 'undefined' && Auth.getModalita() === 'account');
+  const domanda = inAccount
+    ? 'Uscire dall\'account? Per rientrare dovrai accedere di nuovo.'
+    : 'Disconnettersi da Google Drive?';
+  if(!confirm(domanda)) return;
+  try {
+    if(inAccount) { if(Auth.logout) Auth.logout(); }
+    else { if(typeof driveLogout === 'function') driveLogout(); }
+  } catch(e) { console.error('[Todo PWA] logout:', e.message); }
+  if(typeof Auth !== 'undefined' && Auth.clearModalita) Auth.clearModalita();
+  const app = document.getElementById('appContent');
+  if(app) app.style.display = 'none';
+  if(typeof AuthUI !== 'undefined' && AuthUI.mostraScelta) AuthUI.mostraScelta();
+  else if(typeof showLoginScreen === 'function') showLoginScreen();
+}
+
 // Torna alla schermata di scelta modalità (anche dalla login Drive)
 function tornaAllaScelta() {
   try {
@@ -409,6 +428,8 @@ function showApp() {
   document.getElementById('appContent').style.display = 'block';
   document.getElementById('addBar').style.display = 'block';
   document.getElementById('driveDot').classList.add('connected');
+  const btnLog = document.getElementById('btnLogoutPWA');
+  if(btnLog) btnLog.style.display = 'inline-block';
   // popola categoria modale
   document.getElementById('categoriaM').innerHTML = TODO_CATEGORIE.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
   // data odierna nel sottotitolo
