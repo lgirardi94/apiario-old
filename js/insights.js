@@ -1,4 +1,4 @@
-// ===== FILE VERSION: 2026-05-28.9 · insights.js =====
+// ===== FILE VERSION: 2026-06-04.10 · insights.js =====
 /* ===========================================================
    INSIGHTS / ANALISI — costo miele, simulatore prezzo,
    heatmap produzione, genealogia regine, report narrativo
@@ -993,9 +993,13 @@ window.addEventListener('resize', function () {
 // === GENEALOGIA SVG STATICO (per il report esportato, autosufficiente) ===
 // Calcola posizioni e disegna TUTTO in SVG (card come gruppi, linee anti-sovrapposizione),
 // senza dipendere da getBoundingClientRect. Ritorna una stringa SVG completa.
-function buildGenealogiaSVGStatico(arnieInput, logBookInput) {
+function buildGenealogiaSVGStatico(arnieInput, logBookInput, opts) {
   try {
-    const arnieAll = (arnieInput || []).filter(a => !a.annoDismissione);
+    const o = opts || {};
+    // Per il report mostriamo lo schema COMPLETO: includiamo anche le arnie dismesse
+    // (default true), così lo storico genealogico non perde nodi.
+    const includiDismesse = o.includiDismesse !== false;
+    const arnieAll = (arnieInput || []).filter(a => includiDismesse ? true : !a.annoDismissione);
     if (arnieAll.length === 0) {
       return '<p style="color:#8B6F4E;font-style:italic">Nessuna arnia da mostrare nella genealogia.</p>';
     }
@@ -1128,14 +1132,20 @@ function buildGenealogiaSVGStatico(arnieInput, logBookInput) {
       const col = colOf(a), bg = bgOf(a);
       const kg = prodArnia[a.id] || 0;
       const reg = a.reginaAnno ? a.reginaAnno : '';
+      const dismessa = !!a.annoDismissione;
       let sub = a.reginaOrigine === 'inserita' ? 'regina inserita' : (a.reginaOrigine === 'acquistata' ? 'acquistata' : 'allevata');
-      cards += `<g transform="translate(${p.x},${p.y})">
-        <rect x="0" y="0" width="${CW}" height="${CH}" rx="11" fill="${bg}" stroke="${col}" stroke-width="1.5"/>
+      // le dismesse: tratteggio + leggera trasparenza + etichetta "dismessa AAAA"
+      const dash = dismessa ? ' stroke-dasharray="5 3"' : '';
+      const opacita = dismessa ? ' opacity="0.62"' : '';
+      cards += `<g transform="translate(${p.x},${p.y})"${opacita}>
+        <rect x="0" y="0" width="${CW}" height="${CH}" rx="11" fill="${bg}" stroke="${col}" stroke-width="1.5"${dash}/>
         <rect x="0" y="0" width="5" height="${CH}" rx="2" fill="${col}"/>
         <text x="${CW / 2}" y="24" text-anchor="middle" font-size="15" font-weight="700" fill="#5C3A10" font-family="Georgia,serif">${icoOf(a)} #${escX(a.num)}</text>
         ${a.nome ? `<text x="${CW / 2}" y="40" text-anchor="middle" font-size="10" fill="#2A1A05" font-family="Georgia,serif">${escX(a.nome)}</text>` : ''}
         <text x="${CW / 2}" y="${a.nome ? 56 : 42}" text-anchor="middle" font-size="9" fill="#6B4A20" font-family="Georgia,serif">${reg ? reg + ' · ' : ''}${sub}</text>
-        ${kg > 0 ? `<text x="${CW / 2}" y="${a.nome ? 74 : 62}" text-anchor="middle" font-size="10" font-weight="700" fill="#27500A" font-family="Georgia,serif">${kg.toFixed(0)} kg</text>` : ''}
+        ${dismessa
+          ? `<text x="${CW / 2}" y="${a.nome ? 74 : 62}" text-anchor="middle" font-size="9" font-style="italic" fill="#8A6A3A" font-family="Georgia,serif">dismessa${a.annoDismissione ? ' ' + escX(a.annoDismissione) : ''}</text>`
+          : (kg > 0 ? `<text x="${CW / 2}" y="${a.nome ? 74 : 62}" text-anchor="middle" font-size="10" font-weight="700" fill="#27500A" font-family="Georgia,serif">${kg.toFixed(0)} kg</text>` : '')}
       </g>`;
     });
 
@@ -1143,9 +1153,15 @@ function buildGenealogiaSVGStatico(arnieInput, logBookInput) {
       <span>━━ <strong style="color:#C8860A">regina</strong> (uovo/cella)</span>
       <span>┄┄ <strong style="color:#8B7355">solo telaini</strong></span>
       <span>🥚 allevata · 👑 inserita · 🛒 acquistata</span>
+      <span style="opacity:0.62">▦ arnia dismessa</span>
     </div>`;
 
-    return legenda + `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;max-width:${W}px" xmlns="http://www.w3.org/2000/svg">${lines}${cards}</svg>`;
+    // Per il report: niente max-width, così l'SVG riempie la larghezza della pagina
+    // (l'intero viewBox è sempre incluso, quindi lo schema non si taglia mai).
+    const svgStyle = o.forReport
+      ? 'width:100%;height:auto;display:block'
+      : `width:100%;height:auto;max-width:${W}px`;
+    return legenda + `<svg viewBox="0 0 ${W} ${H}" style="${svgStyle}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">${lines}${cards}</svg>`;
   } catch (err) {
     console.error('[Genealogia] Errore SVG statico:', err.message);
     return '<p style="color:#8B6F4E;font-style:italic">Genealogia non disponibile.</p>';
